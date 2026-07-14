@@ -3,6 +3,7 @@ import WeddingAttireSection from '@/components/wedding-attire-section';
 import WeddingCountdown from '@/components/wedding-countdown';
 import WeddingGallerySection from '@/components/wedding-gallery-section';
 import WeddingMotifStripe from '@/components/wedding-motif-stripe';
+import WeddingMusic from '@/components/wedding-music';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingRemindersSection from '@/components/wedding-reminders-section';
 import WeddingReveal from '@/components/wedding-reveal';
@@ -13,6 +14,7 @@ export default function Welcome() {
     return (
         <>
             <Head title="Via & Renzo" />
+            <WeddingMusic />
             <div className="min-h-screen bg-wedding-cream">
                 <WeddingMotifStripe />
 
