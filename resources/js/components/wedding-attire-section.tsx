@@ -86,7 +86,7 @@ function AttireSampleDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="max-w-3xl gap-0 overflow-hidden rounded-none border-wedding-sage/25 bg-wedding-ivory p-0 shadow-[0_24px_60px_-28px_rgba(26,36,55,0.45)] sm:max-w-3xl"
+                className="w-[calc(100%-2rem)] max-w-3xl gap-0 overflow-hidden rounded-none border-wedding-sage/25 bg-wedding-ivory p-0 shadow-[0_24px_60px_-28px_rgba(26,36,55,0.45)] sm:max-w-3xl"
                 overlayClassName="bg-wedding-navy/40 backdrop-blur-md"
             >
                 {color ? (
