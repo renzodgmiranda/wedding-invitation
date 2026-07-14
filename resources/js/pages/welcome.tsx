@@ -1,6 +1,10 @@
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
 import WeddingAttireSection from '@/components/wedding-attire-section';
 import WeddingCountdown from '@/components/wedding-countdown';
+import WeddingEnvelopeIntro, {
+    hasOpenedInvitation,
+} from '@/components/wedding-envelope-intro';
 import WeddingGallerySection from '@/components/wedding-gallery-section';
 import WeddingMotifStripe from '@/components/wedding-motif-stripe';
 import WeddingMusic from '@/components/wedding-music';
@@ -11,10 +15,15 @@ import WeddingRsvpSection from '@/components/wedding-rsvp-section';
 import WeddingVenueSection from '@/components/wedding-venue-section';
 
 export default function Welcome() {
+    const [showIntro, setShowIntro] = useState(
+        () => !hasOpenedInvitation(),
+    );
+
     return (
         <>
             <Head title="" />
             <WeddingMusic />
+
             <div className="min-h-screen bg-wedding-cream">
                 <WeddingMotifStripe />
 
@@ -71,6 +80,10 @@ export default function Welcome() {
                 <WeddingRemindersSection />
                 <WeddingRsvpSection />
             </div>
+
+            {showIntro ? (
+                <WeddingEnvelopeIntro onOpen={() => setShowIntro(false)} />
+            ) : null}
         </>
     );
 }
