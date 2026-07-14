@@ -13,9 +13,13 @@ import WeddingRemindersSection from '@/components/wedding-reminders-section';
 import WeddingReveal from '@/components/wedding-reveal';
 import WeddingRsvpSection from '@/components/wedding-rsvp-section';
 import WeddingVenueSection from '@/components/wedding-venue-section';
+import { cn } from '@/lib/utils';
 
 export default function Welcome() {
     const [showIntro, setShowIntro] = useState(
+        () => !hasOpenedInvitation(),
+    );
+    const [pageBlurred, setPageBlurred] = useState(
         () => !hasOpenedInvitation(),
     );
 
@@ -24,7 +28,13 @@ export default function Welcome() {
             <Head title="" />
             <WeddingMusic enabled={!showIntro} />
 
-            <div className="min-h-screen bg-wedding-cream">
+            <div
+                className={cn(
+                    'min-h-screen bg-wedding-cream transition-[filter] duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
+                    pageBlurred && 'blur-[12px]',
+                )}
+                aria-hidden={showIntro ? true : undefined}
+            >
                 <WeddingMotifStripe />
 
                 <section className="relative flex min-h-[calc(100vh-4px)] flex-col items-center justify-center overflow-hidden px-6 py-16">
@@ -87,7 +97,10 @@ export default function Welcome() {
             </div>
 
             {showIntro ? (
-                <WeddingEnvelopeIntro onOpen={() => setShowIntro(false)} />
+                <WeddingEnvelopeIntro
+                    onOpenStart={() => setPageBlurred(false)}
+                    onOpen={() => setShowIntro(false)}
+                />
             ) : null}
         </>
     );
