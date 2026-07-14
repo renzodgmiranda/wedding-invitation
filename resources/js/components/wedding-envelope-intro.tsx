@@ -306,7 +306,7 @@ export default function WeddingEnvelopeIntro({
                     >
                         Save the Date
                     </p>
-                    <h1 className="font-script text-7xl leading-tight text-wedding-navy sm:text-8xl">
+                    <h1 className="font-invite text-7xl leading-tight text-wedding-navy sm:text-8xl">
                         You&apos;re Invited!
                     </h1>
                 </div>
