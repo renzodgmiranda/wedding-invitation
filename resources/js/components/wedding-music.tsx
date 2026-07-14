@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 
 const MUSIC_SRC = '/music/spring-waltz.webm';
 
-export default function WeddingMusic() {
+type WeddingMusicProps = {
+    /** When false, audio is held silent (e.g. seal intro still showing). */
+    enabled?: boolean;
+};
+
+export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playing, setPlaying] = useState(false);
 
@@ -19,6 +24,27 @@ export default function WeddingMusic() {
 
         audio.addEventListener('play', markPlaying);
         audio.addEventListener('pause', markPaused);
+
+        return () => {
+            audio.removeEventListener('play', markPlaying);
+            audio.removeEventListener('pause', markPaused);
+            audio.pause();
+            audio.src = '';
+            audioRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+
+        if (!audio) {
+            return;
+        }
+
+        if (!enabled) {
+            audio.pause();
+            return;
+        }
 
         const tryPlay = () => {
             void audio.play().catch(() => {
@@ -52,18 +78,13 @@ export default function WeddingMusic() {
             unlockEvents.forEach((event) => {
                 document.removeEventListener(event, unlock);
             });
-            audio.removeEventListener('play', markPlaying);
-            audio.removeEventListener('pause', markPaused);
-            audio.pause();
-            audio.src = '';
-            audioRef.current = null;
         };
-    }, []);
+    }, [enabled]);
 
     const toggle = () => {
         const audio = audioRef.current;
 
-        if (!audio) {
+        if (!audio || !enabled) {
             return;
         }
 
@@ -73,6 +94,10 @@ export default function WeddingMusic() {
             audio.pause();
         }
     };
+
+    if (!enabled) {
+        return null;
+    }
 
     return (
         <button

@@ -140,7 +140,7 @@ export default function WeddingRsvpSection() {
                                                 id="message"
                                                 name="message"
                                                 rows={4}
-                                                placeholder="a note for the couple"
+                                                placeholder="A note for the couple"
                                                 className={`${fieldClassName} resize-none`}
                                             />
                                             <InputError

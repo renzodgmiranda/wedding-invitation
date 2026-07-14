@@ -22,7 +22,7 @@ export default function Welcome() {
     return (
         <>
             <Head title="" />
-            <WeddingMusic />
+            <WeddingMusic enabled={!showIntro} />
 
             <div className="min-h-screen bg-wedding-cream">
                 <WeddingMotifStripe />
