@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingReveal from '@/components/wedding-reveal';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ const GALLERY_ITEMS = [
 ] as const;
 
 const MIDDLE_INDEX = Math.floor(GALLERY_ITEMS.length / 2);
+const SWIPE_THRESHOLD_PX = 40;
 
 function GalleryFrame({
     src,
@@ -53,7 +54,7 @@ function GalleryFrame({
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
+                'relative shrink-0 snap-center snap-always self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
                 featured && 'mb-3 sm:mb-5',
             )}
         >
@@ -68,6 +69,7 @@ function GalleryFrame({
                 )}
                 loading={featured ? 'eager' : 'lazy'}
                 decoding="async"
+                draggable={false}
             />
             <span
                 className="absolute inset-x-0 top-0 h-0.5 bg-wedding-gold/70"
@@ -80,8 +82,57 @@ function GalleryFrame({
 export default function WeddingGallerySection() {
     const scrollerRef = useRef<HTMLDivElement>(null);
     const frameRefs = useRef<(HTMLElement | null)[]>([]);
+    const activeIndexRef = useRef(MIDDLE_INDEX);
     const [activeIndex, setActiveIndex] = useState(MIDDLE_INDEX);
     const [isDesktop, setIsDesktop] = useState(false);
+
+    const getClosestIndex = useCallback(() => {
+        const scroller = scrollerRef.current;
+
+        if (!scroller) {
+            return MIDDLE_INDEX;
+        }
+
+        const scrollerCenter = scroller.scrollLeft + scroller.clientWidth / 2;
+        let closestIndex = MIDDLE_INDEX;
+        let closestDistance = Number.POSITIVE_INFINITY;
+
+        frameRefs.current.forEach((frameEl, index) => {
+            if (!frameEl) {
+                return;
+            }
+
+            const frameCenter = frameEl.offsetLeft + frameEl.offsetWidth / 2;
+            const distance = Math.abs(frameCenter - scrollerCenter);
+
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestIndex = index;
+            }
+        });
+
+        return closestIndex;
+    }, []);
+
+    const scrollToIndex = useCallback(
+        (index: number, behavior: ScrollBehavior = 'smooth') => {
+            const scroller = scrollerRef.current;
+            const frame = frameRefs.current[index];
+
+            if (!scroller || !frame) {
+                return;
+            }
+
+            const left =
+                frame.offsetLeft -
+                (scroller.clientWidth - frame.offsetWidth) / 2;
+
+            scroller.scrollTo({ left: Math.max(0, left), behavior });
+            activeIndexRef.current = index;
+            setActiveIndex(index);
+        },
+        [],
+    );
 
     useEffect(() => {
         const media = window.matchMedia('(min-width: 1024px)');
@@ -102,12 +153,7 @@ export default function WeddingGallerySection() {
         }
 
         const centerMiddle = () => {
-            const left =
-                middle.offsetLeft -
-                (scroller.clientWidth - middle.offsetWidth) / 2;
-
-            scroller.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
-            setActiveIndex(MIDDLE_INDEX);
+            scrollToIndex(MIDDLE_INDEX, 'auto');
         };
 
         centerMiddle();
@@ -124,7 +170,7 @@ export default function WeddingGallerySection() {
             window.removeEventListener('resize', centerMiddle);
             img?.removeEventListener('load', centerMiddle);
         };
-    }, [isDesktop]);
+    }, [isDesktop, scrollToIndex]);
 
     useEffect(() => {
         const scroller = scrollerRef.current;
@@ -133,51 +179,97 @@ export default function WeddingGallerySection() {
             return;
         }
 
-        let frame = 0;
+        let startX = 0;
+        let startY = 0;
+        let indexAtStart = MIDDLE_INDEX;
+        let isHorizontal: boolean | null = null;
+        let isPaging = false;
 
-        const updateActive = () => {
-            frame = 0;
-            const scrollerCenter = scroller.scrollLeft + scroller.clientWidth / 2;
-            let closestIndex = MIDDLE_INDEX;
-            let closestDistance = Number.POSITIVE_INFINITY;
-
-            frameRefs.current.forEach((frameEl, index) => {
-                if (!frameEl) {
-                    return;
-                }
-
-                const frameCenter = frameEl.offsetLeft + frameEl.offsetWidth / 2;
-                const distance = Math.abs(frameCenter - scrollerCenter);
-
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closestIndex = index;
-                }
-            });
-
-            setActiveIndex((current) =>
-                current === closestIndex ? current : closestIndex,
-            );
+        const settleToIndex = (index: number) => {
+            const next = Math.max(0, Math.min(GALLERY_ITEMS.length - 1, index));
+            isPaging = true;
+            scrollToIndex(next, 'smooth');
         };
 
-        const onScroll = () => {
-            if (frame) {
+        const onTouchStart = (event: TouchEvent) => {
+            const touch = event.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            indexAtStart = activeIndexRef.current;
+            isHorizontal = null;
+            isPaging = false;
+        };
+
+        const onTouchMove = (event: TouchEvent) => {
+            if (isHorizontal !== null || event.touches.length === 0) {
                 return;
             }
 
-            frame = window.requestAnimationFrame(updateActive);
+            const touch = event.touches[0];
+            const dx = Math.abs(touch.clientX - startX);
+            const dy = Math.abs(touch.clientY - startY);
+
+            if (dx < 8 && dy < 8) {
+                return;
+            }
+
+            isHorizontal = dx > dy;
         };
 
-        scroller.addEventListener('scroll', onScroll, { passive: true });
-        updateActive();
+        const onTouchEnd = (event: TouchEvent) => {
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
 
-        return () => {
-            scroller.removeEventListener('scroll', onScroll);
-            if (frame) {
-                window.cancelAnimationFrame(frame);
+            if (isHorizontal === false || Math.abs(dx) < Math.abs(dy)) {
+                return;
+            }
+
+            if (Math.abs(dx) >= SWIPE_THRESHOLD_PX) {
+                settleToIndex(indexAtStart + (dx < 0 ? 1 : -1));
+                return;
+            }
+
+            const closest = getClosestIndex();
+
+            if (
+                closest !== indexAtStart &&
+                Math.abs(closest - indexAtStart) === 1
+            ) {
+                settleToIndex(closest);
+                return;
+            }
+
+            settleToIndex(indexAtStart);
+        };
+
+        const onScrollEnd = () => {
+            if (isPaging) {
+                isPaging = false;
+                return;
+            }
+
+            const closest = getClosestIndex();
+
+            if (closest !== activeIndexRef.current) {
+                scrollToIndex(closest, 'smooth');
             }
         };
-    }, [isDesktop]);
+
+        scroller.addEventListener('touchstart', onTouchStart, {
+            passive: true,
+        });
+        scroller.addEventListener('touchmove', onTouchMove, { passive: true });
+        scroller.addEventListener('touchend', onTouchEnd, { passive: true });
+        scroller.addEventListener('scrollend', onScrollEnd);
+
+        return () => {
+            scroller.removeEventListener('touchstart', onTouchStart);
+            scroller.removeEventListener('touchmove', onTouchMove);
+            scroller.removeEventListener('touchend', onTouchEnd);
+            scroller.removeEventListener('scrollend', onScrollEnd);
+        };
+    }, [getClosestIndex, isDesktop, scrollToIndex]);
 
     return (
         <section className="overflow-hidden bg-wedding-ivory px-6 py-20">
@@ -199,7 +291,7 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto px-[max(1.5rem,calc(50%-7rem))] pb-4 sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
+                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
                     >
                         {GALLERY_ITEMS.map((item, index) => {
                             const featured = isDesktop
