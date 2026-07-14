@@ -59,16 +59,18 @@ function GalleryFrame({
         >
             <div
                 className={cn(
-                    'relative origin-bottom overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out will-change-transform',
-                    featured && 'max-lg:scale-[1.12]',
+                    'relative overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out will-change-transform',
+                    featured && 'max-lg:-translate-y-3',
                 )}
             >
                 <img
                     src={src}
                     alt={alt}
                     className={cn(
-                        'block h-80 transition-[height] duration-300 ease-out sm:h-96 max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
-                        featured ? 'lg:h-[32rem]' : 'lg:h-[28rem]',
+                        'block transition-[height] duration-300 ease-out max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
+                        featured
+                            ? 'h-96 sm:h-[26rem] lg:h-[32rem]'
+                            : 'h-72 sm:h-96 lg:h-[28rem]',
                     )}
                     loading={featured ? 'eager' : 'lazy'}
                     decoding="async"
@@ -249,7 +251,7 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        className="-mx-6 flex h-[26rem] snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[29rem] sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
                     >
                         {GALLERY_ITEMS.map((item, index) => {
                             const featured = isDesktop
