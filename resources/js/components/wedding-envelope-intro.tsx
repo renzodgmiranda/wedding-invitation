@@ -26,11 +26,13 @@ export function markInvitationOpened(): void {
 }
 
 const COLORS = {
+    navy: '#1a2437',
     sage: '#53736e',
+    gold: '#cbb079',
     cream: '#f9f7f3',
 } as const;
 
-const SEAL_SIZE = 'min(22vmin, 8.5rem)';
+const SEAL_SIZE = 'min(28vmin, 10.5rem)';
 
 type WeddingEnvelopeIntroProps = {
     onOpen: () => void;
@@ -48,7 +50,7 @@ function SealImage() {
                 alt=""
                 width={1000}
                 height={1000}
-                className="h-full w-full object-contain"
+                className="h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(26,36,55,0.12)]"
                 draggable={false}
                 decoding="async"
             />
@@ -62,13 +64,13 @@ function SlideArrow() {
             aria-hidden="true"
             viewBox="0 0 24 24"
             fill="none"
-            className="h-5 w-5 shrink-0 animate-[envelope-nudge-right_1.8s_ease-in-out_infinite] opacity-70 sm:h-6 sm:w-6"
+            className="h-4 w-4 shrink-0 animate-[envelope-nudge-right_2.8s_ease-in-out_infinite] opacity-50 sm:h-5 sm:w-5"
             style={{ color: COLORS.sage }}
         >
             <path
                 d="M9.5 5.5 16 12l-6.5 6.5"
                 stroke="currentColor"
-                strokeWidth="1.25"
+                strokeWidth="1.1"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
@@ -295,18 +297,26 @@ export default function WeddingEnvelopeIntro({
                 <div
                     className="pointer-events-none absolute inset-x-0 z-10 flex flex-col items-center px-6 text-center transition-opacity duration-300 ease-out"
                     style={{
-                        top: `calc(50% - (${SEAL_SIZE} / 2) - 0.75rem)`,
+                        top: `calc(50% - (${SEAL_SIZE} / 2) - 1.25rem)`,
                         transform: 'translateY(-100%)',
                         opacity: copyHidden ? 0 : 1,
                     }}
                 >
                     <p
-                        className="mb-1.5 font-sans text-[0.7rem] tracking-[0.45em] uppercase sm:mb-2 sm:text-xs"
+                        className="mb-3 font-sans text-[0.65rem] tracking-[0.4em] uppercase sm:text-[0.7rem]"
                         style={{ color: COLORS.sage }}
                     >
                         Save the Date
                     </p>
-                    <h1 className="font-invite text-7xl leading-tight text-wedding-navy sm:text-8xl">
+                    <span
+                        className="mb-5 block h-px w-10 sm:mb-6 sm:w-12"
+                        style={{ backgroundColor: COLORS.gold }}
+                        aria-hidden="true"
+                    />
+                    <h1
+                        className="font-invite text-[4.25rem] leading-[0.95] tracking-wide text-wedding-navy sm:text-8xl"
+                        style={{ color: COLORS.navy }}
+                    >
                         You&apos;re Invited!
                     </h1>
                 </div>
@@ -322,7 +332,7 @@ export default function WeddingEnvelopeIntro({
                     <div
                         role="button"
                         tabIndex={0}
-                        aria-label="Slide the seal right to open the invitation"
+                        aria-label="Slide to open the invitation"
                         onPointerDown={onPointerDown}
                         onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
                             if (
@@ -345,7 +355,7 @@ export default function WeddingEnvelopeIntro({
                     </div>
 
                     <div
-                        className="pointer-events-none absolute top-1/2 left-full ml-5 -translate-y-1/2 transition-opacity duration-300 ease-out sm:ml-8"
+                        className="pointer-events-none absolute top-1/2 left-full ml-6 -translate-y-1/2 transition-opacity duration-300 ease-out sm:ml-9"
                         style={{ opacity: copyHidden ? 0 : 1 }}
                         aria-hidden="true"
                     >
@@ -354,14 +364,14 @@ export default function WeddingEnvelopeIntro({
                 </div>
 
                 <p
-                    className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.65rem] tracking-[0.2em] uppercase transition-opacity duration-300 ease-out sm:text-xs"
+                    className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.6rem] tracking-[0.28em] uppercase transition-opacity duration-300 ease-out sm:text-[0.65rem]"
                     style={{
-                        top: `calc(50% + (${SEAL_SIZE} / 2) + 0.75rem)`,
+                        top: `calc(50% + (${SEAL_SIZE} / 2) + 1.1rem)`,
                         color: COLORS.sage,
-                        opacity: copyHidden ? 0 : 1,
+                        opacity: copyHidden ? 0 : 0.85,
                     }}
                 >
-                    Slide the seal right to open
+                    Slide to open
                 </p>
             </div>
         </div>
