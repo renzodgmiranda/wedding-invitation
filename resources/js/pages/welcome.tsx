@@ -47,7 +47,7 @@ export default function Welcome() {
                             <p className="text-sm tracking-[0.35em] text-wedding-gold uppercase sm:text-base">
                                 December 21, 2026
                             </p>
-                            <p className="text-xs tracking-[0.3em] text-wedding-gold/85 uppercase sm:text-sm">
+                            <p className="text-sm tracking-[0.35em] text-wedding-gold uppercase sm:text-base">
                                 2:00 PM
                             </p>
                         </div>
