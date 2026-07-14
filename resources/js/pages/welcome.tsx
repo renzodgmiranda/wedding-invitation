@@ -10,7 +10,6 @@ import WeddingMotifStripe from '@/components/wedding-motif-stripe';
 import WeddingMusic from '@/components/wedding-music';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingRemindersSection from '@/components/wedding-reminders-section';
-import WeddingReveal from '@/components/wedding-reveal';
 import WeddingRsvpSection from '@/components/wedding-rsvp-section';
 import WeddingVenueSection from '@/components/wedding-venue-section';
 import { cn } from '@/lib/utils';
@@ -18,6 +17,9 @@ import { cn } from '@/lib/utils';
 const PAGE_BLUR_MS = 1400;
 /** Let the envelope start sliding before the page begins to clear. */
 const PAGE_UNBLUR_DELAY_MS = 300;
+/** Half-beat after unblur starts — hero copy settles in. */
+const HERO_REVEAL_DELAY_MS = PAGE_UNBLUR_DELAY_MS + 380;
+const REVEAL_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 export default function Welcome() {
     const [showIntro, setShowIntro] = useState(
@@ -29,7 +31,10 @@ export default function Welcome() {
     const [showBlurOverlay, setShowBlurOverlay] = useState(
         () => !hasOpenedInvitation(),
     );
-    const unblurDelayRef = useRef<number | null>(null);
+    const [heroVisible, setHeroVisible] = useState(() =>
+        hasOpenedInvitation(),
+    );
+    const openTimersRef = useRef<number[]>([]);
 
     useEffect(() => {
         if (pageBlurred) {
@@ -46,11 +51,23 @@ export default function Welcome() {
 
     useEffect(() => {
         return () => {
-            if (unblurDelayRef.current !== null) {
-                window.clearTimeout(unblurDelayRef.current);
-            }
+            openTimersRef.current.forEach((timer) => window.clearTimeout(timer));
         };
     }, []);
+
+    const beginReveal = () => {
+        openTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+        openTimersRef.current = [];
+
+        openTimersRef.current.push(
+            window.setTimeout(() => {
+                setPageBlurred(false);
+            }, PAGE_UNBLUR_DELAY_MS),
+            window.setTimeout(() => {
+                setHeroVisible(true);
+            }, HERO_REVEAL_DELAY_MS),
+        );
+    };
 
     return (
         <>
@@ -67,7 +84,13 @@ export default function Welcome() {
                     <img
                         src="/images/background/bg-day.webp"
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className={cn(
+                            'absolute inset-0 h-full w-full object-cover transition-[filter,transform] duration-[1400ms]',
+                            pageBlurred
+                                ? 'scale-[1.04] blur-[16px]'
+                                : 'scale-100 blur-0',
+                        )}
+                        style={{ transitionTimingFunction: REVEAL_EASE }}
                     />
                     <div
                         className="pointer-events-none absolute inset-0 bg-wedding-navy/55"
@@ -78,7 +101,15 @@ export default function Welcome() {
                         aria-hidden="true"
                     />
 
-                    <WeddingReveal className="relative z-10 flex max-w-2xl flex-col items-center text-center">
+                    <div
+                        className={cn(
+                            'relative z-10 flex max-w-2xl flex-col items-center text-center transition-[opacity,transform] duration-[1100ms]',
+                            heroVisible
+                                ? 'translate-y-0 opacity-100'
+                                : 'translate-y-5 opacity-0',
+                        )}
+                        style={{ transitionTimingFunction: REVEAL_EASE }}
+                    >
                         <div className="mb-6 flex flex-col items-center gap-1.5">
                             <p className="text-sm tracking-[0.35em] text-wedding-gold uppercase sm:text-base">
                                 December 21, 2026
@@ -112,7 +143,7 @@ export default function Welcome() {
                         </p>
 
                         <WeddingCountdown variant="dark" />
-                    </WeddingReveal>
+                    </div>
                 </section>
 
                 <WeddingGallerySection />
@@ -136,12 +167,7 @@ export default function Welcome() {
 
             {showIntro ? (
                 <WeddingEnvelopeIntro
-                    onOpenStart={() => {
-                        unblurDelayRef.current = window.setTimeout(() => {
-                            unblurDelayRef.current = null;
-                            setPageBlurred(false);
-                        }, PAGE_UNBLUR_DELAY_MS);
-                    }}
+                    onOpenStart={beginReveal}
                     onOpen={() => setShowIntro(false)}
                 />
             ) : null}
