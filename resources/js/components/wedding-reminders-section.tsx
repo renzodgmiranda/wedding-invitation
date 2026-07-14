@@ -30,9 +30,9 @@ const REMINDERS = [
 
 export default function WeddingRemindersSection() {
     return (
-        <section className="relative overflow-hidden bg-wedding-sage/15 px-6 py-20">
+        <section className="relative overflow-hidden bg-wedding-slate px-6 py-20">
             <div
-                className="pointer-events-none absolute inset-0 bg-linear-to-b from-wedding-forest/10 via-transparent to-wedding-forest/5"
+                className="pointer-events-none absolute inset-0 bg-linear-to-b from-wedding-navy/30 via-transparent to-wedding-navy/15"
                 aria-hidden="true"
             />
 
@@ -42,35 +42,36 @@ export default function WeddingRemindersSection() {
                         For our guests
                     </p>
 
-                    <h2 className="font-sans text-3xl font-light tracking-wide text-wedding-navy sm:text-4xl">
+                    <h2 className="font-sans text-3xl font-light tracking-wide text-wedding-cream sm:text-4xl">
                         A Few Gentle Reminders
                     </h2>
 
                     <div className="my-8">
-                        <WeddingOrnament />
+                        <WeddingOrnament variant="dark" />
                     </div>
                 </WeddingReveal>
 
-                <ul className="grid w-full gap-5 text-left sm:grid-cols-2 sm:gap-6">
+                <ul className="grid w-full gap-x-12 gap-y-10 text-left sm:grid-cols-2 sm:gap-y-12">
                     {REMINDERS.map((reminder, index) => (
                         <WeddingReveal
                             key={reminder.title}
                             delayMs={index * 60}
-                            className="h-full"
                         >
-                            <li className="flex h-full flex-col border border-wedding-sage/20 bg-wedding-ivory p-6 shadow-[0_16px_40px_-28px_rgba(26,36,55,0.3)] sm:p-7">
+                            <li className="flex gap-4 sm:gap-5">
                                 <span
-                                    className="mb-4 font-sans text-sm tracking-[0.2em] text-wedding-gold tabular-nums"
+                                    className="shrink-0 font-sans text-sm tracking-[0.2em] text-wedding-gold tabular-nums"
                                     aria-hidden="true"
                                 >
                                     {String(index + 1).padStart(2, '0')}
                                 </span>
-                                <h3 className="mb-3 font-sans text-xl font-light text-wedding-navy">
-                                    {reminder.title}
-                                </h3>
-                                <p className="font-sans text-base leading-relaxed font-light text-wedding-slate/90">
-                                    {reminder.body}
-                                </p>
+                                <div className="min-w-0">
+                                    <h3 className="mb-2 font-sans text-xl font-light text-wedding-cream">
+                                        {reminder.title}
+                                    </h3>
+                                    <p className="font-sans text-base leading-relaxed font-light text-wedding-ivory/75">
+                                        {reminder.body}
+                                    </p>
+                                </div>
                             </li>
                         </WeddingReveal>
                     ))}
