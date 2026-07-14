@@ -13,7 +13,7 @@ import WeddingVenueSection from '@/components/wedding-venue-section';
 export default function Welcome() {
     return (
         <>
-            <Head title="Via & Renzo" />
+            <Head title="" />
             <WeddingMusic />
             <div className="min-h-screen bg-wedding-cream">
                 <WeddingMotifStripe />
