@@ -54,15 +54,15 @@ function GalleryFrame({
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center max-lg:self-center lg:self-end',
+                'relative shrink-0 snap-center self-end',
                 featured && 'max-lg:z-10',
             )}
         >
             <div
                 className={cn(
-                    'relative overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out',
+                    'relative origin-bottom overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform',
                     featured
-                        ? 'max-lg:scale-[1.03] lg:mb-5'
+                        ? 'max-lg:scale-[1.12] lg:mb-5'
                         : 'max-lg:scale-100',
                 )}
             >
@@ -70,8 +70,11 @@ function GalleryFrame({
                     src={src}
                     alt={alt}
                     className={cn(
-                        'block object-cover max-lg:h-80 max-lg:w-56 sm:max-lg:h-96 sm:max-lg:w-64 lg:w-auto lg:max-w-none lg:object-cover',
-                        featured ? 'lg:h-[32rem]' : 'lg:h-[28rem]',
+                        'block object-cover object-center',
+                        'aspect-[2/3] h-auto w-56 sm:w-64',
+                        featured
+                            ? 'lg:aspect-auto lg:h-[32rem] lg:w-auto'
+                            : 'lg:aspect-auto lg:h-[28rem] lg:w-auto',
                     )}
                     loading={featured ? 'eager' : 'lazy'}
                     decoding="async"
@@ -259,7 +262,7 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex h-[21rem] snap-x snap-mandatory items-center gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[25rem] sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:items-end lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        className="-mx-6 flex h-[27rem] snap-x snap-mandatory items-end gap-7 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-2 [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[31rem] sm:gap-8 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                     >
                         {GALLERY_ITEMS.map((item, index) => {
