@@ -56,16 +56,35 @@ function SealImage() {
     );
 }
 
+function SlideArrow() {
+    return (
+        <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-5 w-5 shrink-0 animate-[envelope-nudge-right_1.8s_ease-in-out_infinite] opacity-70 sm:h-6 sm:w-6"
+            style={{ color: COLORS.sage }}
+        >
+            <path
+                d="M9.5 5.5 16 12l-6.5 6.5"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
 function applyResistance(dx: number, screenW: number): number {
-    const sign = Math.sign(dx) || 1;
-    const abs = Math.abs(dx);
+    const clamped = Math.max(0, dx);
     const softZone = screenW * 0.4;
     const resisted =
-        abs <= softZone
-            ? abs
-            : softZone + (abs - softZone) * 0.5;
+        clamped <= softZone
+            ? clamped
+            : softZone + (clamped - softZone) * 0.5;
 
-    return sign * Math.min(resisted, screenW * 0.95);
+    return Math.min(resisted, screenW * 0.95);
 }
 
 export default function WeddingEnvelopeIntro({
@@ -131,26 +150,22 @@ export default function WeddingEnvelopeIntro({
         onOpen();
     }, [onOpen, setPhaseSafe]);
 
-    const completeOpen = useCallback(
-        (direction: number) => {
-            if (phaseRef.current === 'opening' || phaseRef.current === 'done') {
-                return;
-            }
+    const completeOpen = useCallback(() => {
+        if (phaseRef.current === 'opening' || phaseRef.current === 'done') {
+            return;
+        }
 
-            const dir = direction === 0 ? 1 : Math.sign(direction);
-            const target = dir * (window.innerWidth + 48);
+        const target = window.innerWidth + 48;
 
-            setPhaseSafe('opening');
-            setCopyHidden(true);
-            onOpenStart?.();
-            paintOffset(target, OPEN_MS);
+        setPhaseSafe('opening');
+        setCopyHidden(true);
+        onOpenStart?.();
+        paintOffset(target, OPEN_MS);
 
-            schedule(() => {
-                finishIntro();
-            }, OPEN_MS);
-        },
-        [finishIntro, onOpenStart, paintOffset, schedule, setPhaseSafe],
-    );
+        schedule(() => {
+            finishIntro();
+        }, OPEN_MS);
+    }, [finishIntro, onOpenStart, paintOffset, schedule, setPhaseSafe]);
 
     const settleClosed = useCallback(() => {
         setPhaseSafe('settling');
@@ -168,15 +183,11 @@ export default function WeddingEnvelopeIntro({
         const drag = dragRef.current;
         const current = offsetRef.current;
         const threshold = window.innerWidth * THRESHOLD_RATIO;
-        const flicked = Math.abs(drag.velocity) > FLICK_VELOCITY;
-        const passed = Math.abs(current) >= threshold;
+        const flickedRight = drag.velocity > FLICK_VELOCITY;
+        const passed = current >= threshold;
 
-        if (passed || flicked) {
-            const direction =
-                current !== 0
-                    ? Math.sign(current)
-                    : Math.sign(drag.velocity) || 1;
-            completeOpen(direction);
+        if (passed || flickedRight) {
+            completeOpen();
             return;
         }
 
@@ -278,22 +289,7 @@ export default function WeddingEnvelopeIntro({
         >
             <div
                 ref={panelRef}
-                role="button"
-                tabIndex={0}
-                aria-label="Slide the seal to open the invitation"
-                onPointerDown={onPointerDown}
-                onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        completeOpen(1);
-                    }
-                }}
-                className={cn(
-                    'absolute inset-0 touch-none select-none will-change-transform',
-                    phase === 'opening'
-                        ? 'cursor-default'
-                        : 'cursor-grab active:cursor-grabbing',
-                )}
+                className="absolute inset-0 touch-none select-none will-change-transform"
                 style={{ backgroundColor: COLORS.cream }}
             >
                 <div
@@ -316,14 +312,45 @@ export default function WeddingEnvelopeIntro({
                 </div>
 
                 <div
-                    className="pointer-events-none absolute top-1/2 left-1/2 z-20"
+                    className="absolute top-1/2 left-1/2 z-20"
                     style={{
                         width: SEAL_SIZE,
                         height: SEAL_SIZE,
                         transform: 'translate(-50%, -50%)',
                     }}
                 >
-                    <SealImage />
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Slide the seal right to open the invitation"
+                        onPointerDown={onPointerDown}
+                        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                            if (
+                                event.key === 'Enter' ||
+                                event.key === ' ' ||
+                                event.key === 'ArrowRight'
+                            ) {
+                                event.preventDefault();
+                                completeOpen();
+                            }
+                        }}
+                        className={cn(
+                            'relative h-full w-full touch-none outline-none focus-visible:ring-2 focus-visible:ring-[#53736e]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f7f3]',
+                            phase === 'opening'
+                                ? 'cursor-default'
+                                : 'cursor-grab active:cursor-grabbing',
+                        )}
+                    >
+                        <SealImage />
+                    </div>
+
+                    <div
+                        className="pointer-events-none absolute top-1/2 left-full ml-5 -translate-y-1/2 transition-opacity duration-300 ease-out sm:ml-8"
+                        style={{ opacity: copyHidden ? 0 : 1 }}
+                        aria-hidden="true"
+                    >
+                        <SlideArrow />
+                    </div>
                 </div>
 
                 <p
@@ -334,7 +361,7 @@ export default function WeddingEnvelopeIntro({
                         opacity: copyHidden ? 0 : 1,
                     }}
                 >
-                    Slide the seal to open the invitation
+                    Slide the seal right to open
                 </p>
             </div>
         </div>

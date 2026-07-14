@@ -153,3 +153,16 @@
         @apply bg-background text-foreground;
     }
 }
+
+@keyframes envelope-nudge-right {
+    0%,
+    100% {
+        transform: translateX(0);
+        opacity: 0.55;
+    }
+
+    50% {
+        transform: translateX(4px);
+        opacity: 0.9;
+    }
+}
