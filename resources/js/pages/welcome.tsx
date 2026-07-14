@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import WeddingAttireSection from '@/components/wedding-attire-section';
 import WeddingCountdown from '@/components/wedding-countdown';
 import WeddingEnvelopeIntro, {
@@ -16,6 +16,8 @@ import WeddingVenueSection from '@/components/wedding-venue-section';
 import { cn } from '@/lib/utils';
 
 const PAGE_BLUR_MS = 1400;
+/** Let the envelope start sliding before the page begins to clear. */
+const PAGE_UNBLUR_DELAY_MS = 300;
 
 export default function Welcome() {
     const [showIntro, setShowIntro] = useState(
@@ -27,6 +29,7 @@ export default function Welcome() {
     const [showBlurOverlay, setShowBlurOverlay] = useState(
         () => !hasOpenedInvitation(),
     );
+    const unblurDelayRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (pageBlurred) {
@@ -40,6 +43,14 @@ export default function Welcome() {
 
         return () => window.clearTimeout(timer);
     }, [pageBlurred]);
+
+    useEffect(() => {
+        return () => {
+            if (unblurDelayRef.current !== null) {
+                window.clearTimeout(unblurDelayRef.current);
+            }
+        };
+    }, []);
 
     return (
         <>
@@ -125,7 +136,12 @@ export default function Welcome() {
 
             {showIntro ? (
                 <WeddingEnvelopeIntro
-                    onOpenStart={() => setPageBlurred(false)}
+                    onOpenStart={() => {
+                        unblurDelayRef.current = window.setTimeout(() => {
+                            unblurDelayRef.current = null;
+                            setPageBlurred(false);
+                        }, PAGE_UNBLUR_DELAY_MS);
+                    }}
                     onOpen={() => setShowIntro(false)}
                 />
             ) : null}
