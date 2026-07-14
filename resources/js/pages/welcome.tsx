@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import WeddingAttireSection from '@/components/wedding-attire-section';
 import WeddingCountdown from '@/components/wedding-countdown';
+import WeddingGallerySection from '@/components/wedding-gallery-section';
 import WeddingMotifStripe from '@/components/wedding-motif-stripe';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingRemindersSection from '@/components/wedding-reminders-section';
@@ -62,6 +63,7 @@ export default function Welcome() {
                     </WeddingReveal>
                 </section>
 
+                <WeddingGallerySection />
                 <WeddingVenueSection />
                 <WeddingAttireSection />
                 <WeddingRemindersSection />
