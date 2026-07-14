@@ -37,7 +37,6 @@ const GALLERY_ITEMS = [
 ] as const;
 
 const MIDDLE_INDEX = Math.floor(GALLERY_ITEMS.length / 2);
-const SWIPE_THRESHOLD_PX = 40;
 
 function GalleryFrame({
     src,
@@ -54,7 +53,7 @@ function GalleryFrame({
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center snap-always self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
+                'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
                 featured && 'mb-3 sm:mb-5',
             )}
         >
@@ -179,97 +178,38 @@ export default function WeddingGallerySection() {
             return;
         }
 
-        let startX = 0;
-        let startY = 0;
-        let indexAtStart = MIDDLE_INDEX;
-        let isHorizontal: boolean | null = null;
-        let isPaging = false;
+        let settleTimer = 0;
 
-        const settleToIndex = (index: number) => {
-            const next = Math.max(0, Math.min(GALLERY_ITEMS.length - 1, index));
-            isPaging = true;
-            scrollToIndex(next, 'smooth');
-        };
-
-        const onTouchStart = (event: TouchEvent) => {
-            const touch = event.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            indexAtStart = activeIndexRef.current;
-            isHorizontal = null;
-            isPaging = false;
-        };
-
-        const onTouchMove = (event: TouchEvent) => {
-            if (isHorizontal !== null || event.touches.length === 0) {
-                return;
-            }
-
-            const touch = event.touches[0];
-            const dx = Math.abs(touch.clientX - startX);
-            const dy = Math.abs(touch.clientY - startY);
-
-            if (dx < 8 && dy < 8) {
-                return;
-            }
-
-            isHorizontal = dx > dy;
-        };
-
-        const onTouchEnd = (event: TouchEvent) => {
-            const touch = event.changedTouches[0];
-            const dx = touch.clientX - startX;
-            const dy = touch.clientY - startY;
-
-            if (isHorizontal === false || Math.abs(dx) < Math.abs(dy)) {
-                return;
-            }
-
-            if (Math.abs(dx) >= SWIPE_THRESHOLD_PX) {
-                settleToIndex(indexAtStart + (dx < 0 ? 1 : -1));
-                return;
-            }
-
+        const syncActiveFromScroll = () => {
             const closest = getClosestIndex();
 
-            if (
-                closest !== indexAtStart &&
-                Math.abs(closest - indexAtStart) === 1
-            ) {
-                settleToIndex(closest);
+            if (closest === activeIndexRef.current) {
                 return;
             }
 
-            settleToIndex(indexAtStart);
+            activeIndexRef.current = closest;
+            setActiveIndex(closest);
+        };
+
+        const onScroll = () => {
+            window.clearTimeout(settleTimer);
+            settleTimer = window.setTimeout(syncActiveFromScroll, 80);
         };
 
         const onScrollEnd = () => {
-            if (isPaging) {
-                isPaging = false;
-                return;
-            }
-
-            const closest = getClosestIndex();
-
-            if (closest !== activeIndexRef.current) {
-                scrollToIndex(closest, 'smooth');
-            }
+            window.clearTimeout(settleTimer);
+            syncActiveFromScroll();
         };
 
-        scroller.addEventListener('touchstart', onTouchStart, {
-            passive: true,
-        });
-        scroller.addEventListener('touchmove', onTouchMove, { passive: true });
-        scroller.addEventListener('touchend', onTouchEnd, { passive: true });
+        scroller.addEventListener('scroll', onScroll, { passive: true });
         scroller.addEventListener('scrollend', onScrollEnd);
 
         return () => {
-            scroller.removeEventListener('touchstart', onTouchStart);
-            scroller.removeEventListener('touchmove', onTouchMove);
-            scroller.removeEventListener('touchend', onTouchEnd);
+            window.clearTimeout(settleTimer);
+            scroller.removeEventListener('scroll', onScroll);
             scroller.removeEventListener('scrollend', onScrollEnd);
         };
-    }, [getClosestIndex, isDesktop, scrollToIndex]);
+    }, [getClosestIndex, isDesktop]);
 
     return (
         <section className="overflow-hidden bg-wedding-ivory px-6 py-20">
@@ -291,7 +231,7 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
                     >
                         {GALLERY_ITEMS.map((item, index) => {
                             const featured = isDesktop
