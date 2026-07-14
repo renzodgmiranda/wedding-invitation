@@ -1,4 +1,3 @@
-import { MapPin } from 'lucide-react';
 import WeddingMotifStripe from '@/components/wedding-motif-stripe';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingPanel from '@/components/wedding-panel';
@@ -7,6 +6,7 @@ import WeddingReveal from '@/components/wedding-reveal';
 const VENUE = {
     name: 'Savanna Farm',
     address: '007, Alfonso, Tagaytay',
+    mapSrc: '/images/map/savanna-farm.webp',
     googleMapsUrl:
         'https://www.google.com/maps/search/?api=1&query=Savanna+Farm+007+Alfonso+Tagaytay',
     wazeUrl:
@@ -94,18 +94,32 @@ export default function WeddingVenueSection() {
 
                 <WeddingReveal delayMs={120} className="w-full">
                     <WeddingPanel className="p-6 text-wedding-forest sm:p-8">
-                        <div className="mb-8 w-full overflow-hidden border border-wedding-slate/15 bg-wedding-cream">
-                            <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-linear-to-br from-wedding-sage/10 via-wedding-ivory to-wedding-gold/15 p-8">
-                                <div className="flex size-14 items-center justify-center rounded-full bg-wedding-navy/5 ring-1 ring-wedding-gold/40">
-                                    <MapPin
-                                        className="h-7 w-7 text-wedding-slate"
-                                        strokeWidth={1.25}
-                                    />
-                                </div>
-                                <p className="text-sm tracking-wide text-wedding-slate/70">
-                                    Map embed coming soon
-                                </p>
-                            </div>
+                        <div className="mb-8 w-full">
+                            <a
+                                href={VENUE.googleMapsUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wedding-navy"
+                                aria-label={`Open ${VENUE.name} in Google Maps`}
+                                style={{
+                                    WebkitMaskImage:
+                                        'linear-gradient(to right, transparent, #000 10%, #000 90%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)',
+                                    maskImage:
+                                        'linear-gradient(to right, transparent, #000 10%, #000 90%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)',
+                                    WebkitMaskComposite: 'source-in',
+                                    maskComposite: 'intersect',
+                                }}
+                            >
+                                <img
+                                    src={VENUE.mapSrc}
+                                    alt={`Map of ${VENUE.name}, ${VENUE.address}`}
+                                    width={1200}
+                                    height={675}
+                                    className="aspect-video w-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </a>
                         </div>
 
                         <h3 className="font-sans text-2xl font-light text-wedding-slate sm:text-3xl">
