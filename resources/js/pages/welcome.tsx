@@ -43,9 +43,14 @@ export default function Welcome() {
                     />
 
                     <WeddingReveal className="relative z-10 flex max-w-2xl flex-col items-center text-center">
-                        <p className="mb-6 text-sm tracking-[0.35em] text-wedding-gold uppercase sm:text-base">
-                            December 21, 2026
-                        </p>
+                        <div className="mb-6 flex flex-col items-center gap-1.5">
+                            <p className="text-sm tracking-[0.35em] text-wedding-gold uppercase sm:text-base">
+                                December 21, 2026
+                            </p>
+                            <p className="text-xs tracking-[0.3em] text-wedding-gold/85 uppercase sm:text-sm">
+                                2:00 PM
+                            </p>
+                        </div>
 
                         <WeddingOrnament variant="dark" />
 
