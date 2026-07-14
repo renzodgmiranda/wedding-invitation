@@ -20,7 +20,7 @@ export default function Welcome() {
 
                 <section className="relative flex min-h-[calc(100vh-4px)] flex-col items-center justify-center overflow-hidden px-6 py-16">
                     <img
-                        src="/images/background/bg-day.png"
+                        src="/images/background/bg-day.webp"
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
                     />
