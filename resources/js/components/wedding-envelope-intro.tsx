@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type KeyboardEvent,
+    type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { cn } from '@/lib/utils';
 
 const OPENED_KEY = 'invitation-opened';
-const TEXT_MS = 800;
-const SEAL_MS = 900;
-const FLAP_MS = 700;
-const SPLIT_MS = 1100;
+const SETTLE_MS = 450;
+const OPEN_MS = 700;
+const THRESHOLD_RATIO = 0.22;
+const FLICK_VELOCITY = 0.4; // px/ms
 
 export function hasOpenedInvitation(): boolean {
     return (
@@ -20,163 +27,45 @@ export function markInvitationOpened(): void {
 
 const COLORS = {
     sage: '#53736e',
-    gold: '#cbb079',
+    cream: '#f9f7f3',
 } as const;
 
-const ENVELOPE = {
-    body: '#ebe4d4',
-    flap: '#e6ddc9',
-    flapTop: '#f1ead8',
-    lining: '#d8c8a2',
-    liningDeep: '#c9b487',
-    foldLeft: '#efe8d6',
-    foldRight: '#e6ddc9',
-} as const;
+const SEAL_SIZE = 'min(22vmin, 8.5rem)';
 
 type WeddingEnvelopeIntroProps = {
     onOpen: () => void;
     onOpenStart?: () => void;
 };
 
-type Phase = 'idle' | 'fadingText' | 'cracking' | 'opening' | 'splitting' | 'done';
+type Phase = 'idle' | 'dragging' | 'settling' | 'opening' | 'done';
 
-/**
- * Full-viewport closed envelope: flap from the top edge, pocket to the bottom edge.
- */
-function EnvelopeFace({ flapOpen }: { flapOpen: boolean }) {
+function SealImage() {
     return (
-        <div
-            className="relative h-full w-full overflow-hidden"
-            style={{
-                perspective: '1400px',
-                transformStyle: 'preserve-3d',
-                background: ENVELOPE.body,
-            }}
-        >
-            {/* Lining visible in the center diamond opening */}
-            <div
-                className="pointer-events-none absolute inset-0 z-0"
-                style={{
-                    background: `linear-gradient(180deg, ${ENVELOPE.liningDeep} 0%, ${ENVELOPE.lining} 55%, ${ENVELOPE.liningDeep} 100%)`,
-                }}
-                aria-hidden
+        <picture>
+            <source srcSet="/images/envelope/seal.webp" type="image/webp" />
+            <img
+                src="/images/envelope/seal.png"
+                alt=""
+                width={1000}
+                height={1000}
+                className="h-full w-full object-contain"
+                draggable={false}
+                decoding="async"
             />
-
-            {/* Top flap — opens with rotateX after the seal fades */}
-            <div
-                className={cn(
-                    'pointer-events-none absolute inset-x-0 top-0 z-40 h-1/2 origin-top [transform-style:preserve-3d]',
-                    'transition-[transform,z-index] duration-700 ease-in-out',
-                    flapOpen && 'z-[1] [transform:rotateX(-180deg)]',
-                )}
-                style={{
-                    transitionDelay: flapOpen ? '0ms, 0ms' : '0ms, 350ms',
-                }}
-            >
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background: `linear-gradient(180deg, ${ENVELOPE.flapTop} 0%, ${ENVELOPE.flap} 100%)`,
-                        clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
-                        backfaceVisibility: 'hidden',
-                        WebkitBackfaceVisibility: 'hidden',
-                        filter: 'drop-shadow(0 8px 6px rgba(26, 36, 55, 0.14))',
-                    }}
-                />
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background: `linear-gradient(180deg, ${ENVELOPE.lining} 0%, ${ENVELOPE.liningDeep} 100%)`,
-                        clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
-                        transform: 'rotateX(180deg)',
-                        backfaceVisibility: 'hidden',
-                        WebkitBackfaceVisibility: 'hidden',
-                    }}
-                    aria-hidden
-                />
-            </div>
-
-            {/* Bottom pocket + side folds — fills lower half to bottom edge */}
-            <div
-                className="pointer-events-none absolute inset-0 z-[2]"
-                style={{
-                    filter: 'drop-shadow(0 -6px 3px rgba(26, 36, 55, 0.1))',
-                }}
-            >
-                <div
-                    className="relative h-full w-full"
-                    style={{
-                        background: ENVELOPE.body,
-                        clipPath:
-                            'polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0)',
-                    }}
-                >
-                    <div
-                        className="absolute top-0 left-0 h-full w-1/2"
-                        style={{
-                            background: ENVELOPE.foldLeft,
-                            clipPath: 'polygon(100% 50%, 0 0, 0 100%)',
-                        }}
-                    />
-                    <div
-                        className="absolute top-0 right-0 h-full w-1/2"
-                        style={{
-                            background: ENVELOPE.foldRight,
-                            clipPath: 'polygon(0 50%, 100% 0, 100% 100%)',
-                        }}
-                    />
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            background: `linear-gradient(to top right, transparent calc(50% - 0.5px), ${COLORS.gold}40 50%, transparent calc(50% + 0.5px)), linear-gradient(to top left, transparent calc(50% - 0.5px), ${COLORS.gold}40 50%, transparent calc(50% + 0.5px))`,
-                            clipPath:
-                                'polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0)',
-                        }}
-                    />
-                </div>
-            </div>
-        </div>
+        </picture>
     );
 }
 
-/** Full-bleed viewport face for the envelope + curtain halves. */
-function CoverScreen({ flapOpen }: { flapOpen: boolean }) {
-    return (
-        <div className="absolute inset-0">
-            <EnvelopeFace flapOpen={flapOpen} />
-        </div>
-    );
-}
+function applyResistance(dx: number, screenW: number): number {
+    const sign = Math.sign(dx) || 1;
+    const abs = Math.abs(dx);
+    const softZone = screenW * 0.4;
+    const resisted =
+        abs <= softZone
+            ? abs
+            : softZone + (abs - softZone) * 0.5;
 
-function CurtainHalf({
-    side,
-    isSplitting,
-    flapOpen,
-}: {
-    side: 'left' | 'right';
-    isSplitting: boolean;
-    flapOpen: boolean;
-}) {
-    return (
-        <div
-            className={cn(
-                'pointer-events-none absolute inset-y-0 z-10 h-full w-1/2 overflow-hidden transition-transform duration-[1100ms] ease-[cubic-bezier(0.65,0,0.35,1)] will-change-transform',
-                side === 'left' ? 'left-0' : 'right-0',
-                isSplitting &&
-                    (side === 'left' ? '-translate-x-full' : 'translate-x-full'),
-            )}
-        >
-            {/* Full-viewport width inside the half so both halves share one face */}
-            <div
-                className={cn(
-                    'absolute inset-y-0 h-full w-[200%]',
-                    side === 'left' ? 'left-0' : 'right-0',
-                )}
-            >
-                <CoverScreen flapOpen={flapOpen} />
-            </div>
-        </div>
-    );
+    return sign * Math.min(resisted, screenW * 0.95);
 }
 
 export default function WeddingEnvelopeIntro({
@@ -184,9 +73,20 @@ export default function WeddingEnvelopeIntro({
     onOpenStart,
 }: WeddingEnvelopeIntroProps) {
     const [phase, setPhase] = useState<Phase>('idle');
+    const [copyHidden, setCopyHidden] = useState(false);
     const phaseRef = useRef<Phase>('idle');
+    const offsetRef = useRef(0);
     const hasFinishedRef = useRef(false);
     const timersRef = useRef<number[]>([]);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const dragRef = useRef({
+        pointerId: -1,
+        startX: 0,
+        originOffset: 0,
+        lastX: 0,
+        lastT: 0,
+        velocity: 0,
+    });
 
     const setPhaseSafe = useCallback((next: Phase) => {
         phaseRef.current = next;
@@ -203,6 +103,23 @@ export default function WeddingEnvelopeIntro({
         timersRef.current.push(timer);
     }, []);
 
+    const paintOffset = useCallback((x: number, transitionMs: number | null) => {
+        const panel = panelRef.current;
+        offsetRef.current = x;
+
+        if (!panel) {
+            return;
+        }
+
+        if (transitionMs === null) {
+            panel.style.transition = 'none';
+        } else {
+            panel.style.transition = `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        }
+
+        panel.style.transform = `translate3d(${x}px, 0, 0)`;
+    }, []);
+
     const finishIntro = useCallback(() => {
         if (hasFinishedRef.current) {
             return;
@@ -214,64 +131,136 @@ export default function WeddingEnvelopeIntro({
         onOpen();
     }, [onOpen, setPhaseSafe]);
 
-    const startSplit = useCallback(() => {
-        if (phaseRef.current !== 'opening') {
+    const completeOpen = useCallback(
+        (direction: number) => {
+            if (phaseRef.current === 'opening' || phaseRef.current === 'done') {
+                return;
+            }
+
+            const dir = direction === 0 ? 1 : Math.sign(direction);
+            const target = dir * (window.innerWidth + 48);
+
+            setPhaseSafe('opening');
+            setCopyHidden(true);
+            onOpenStart?.();
+            paintOffset(target, OPEN_MS);
+
+            schedule(() => {
+                finishIntro();
+            }, OPEN_MS);
+        },
+        [finishIntro, onOpenStart, paintOffset, schedule, setPhaseSafe],
+    );
+
+    const settleClosed = useCallback(() => {
+        setPhaseSafe('settling');
+        paintOffset(0, SETTLE_MS);
+
+        schedule(() => {
+            if (phaseRef.current === 'settling') {
+                setCopyHidden(false);
+                setPhaseSafe('idle');
+            }
+        }, SETTLE_MS);
+    }, [paintOffset, schedule, setPhaseSafe]);
+
+    const stopDragging = useCallback(() => {
+        const drag = dragRef.current;
+        const current = offsetRef.current;
+        const threshold = window.innerWidth * THRESHOLD_RATIO;
+        const flicked = Math.abs(drag.velocity) > FLICK_VELOCITY;
+        const passed = Math.abs(current) >= threshold;
+
+        if (passed || flicked) {
+            const direction =
+                current !== 0
+                    ? Math.sign(current)
+                    : Math.sign(drag.velocity) || 1;
+            completeOpen(direction);
             return;
         }
 
-        setPhaseSafe('splitting');
-        onOpenStart?.();
+        settleClosed();
+    }, [completeOpen, settleClosed]);
 
-        schedule(() => {
-            finishIntro();
-        }, SPLIT_MS);
-    }, [finishIntro, onOpenStart, schedule, setPhaseSafe]);
+    const onPointerDown = useCallback(
+        (event: ReactPointerEvent<HTMLDivElement>) => {
+            if (
+                phaseRef.current === 'opening' ||
+                phaseRef.current === 'done' ||
+                event.button !== 0
+            ) {
+                return;
+            }
 
-    const startFlap = useCallback(() => {
-        if (phaseRef.current !== 'cracking') {
-            return;
-        }
+            event.preventDefault();
+            setCopyHidden(true);
+            setPhaseSafe('dragging');
 
-        setPhaseSafe('opening');
+            const now = performance.now();
+            dragRef.current = {
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                originOffset: offsetRef.current,
+                lastX: event.clientX,
+                lastT: now,
+                velocity: 0,
+            };
 
-        schedule(() => {
-            startSplit();
-        }, FLAP_MS);
-    }, [schedule, setPhaseSafe, startSplit]);
+            paintOffset(offsetRef.current, null);
 
-    const startSealFade = useCallback(() => {
-        if (phaseRef.current !== 'fadingText') {
-            return;
-        }
+            const onMove = (moveEvent: PointerEvent) => {
+                if (moveEvent.pointerId !== dragRef.current.pointerId) {
+                    return;
+                }
 
-        setPhaseSafe('cracking');
+                moveEvent.preventDefault();
 
-        schedule(() => {
-            startFlap();
-        }, SEAL_MS);
-    }, [schedule, setPhaseSafe, startFlap]);
+                const nowMove = performance.now();
+                const dt = nowMove - dragRef.current.lastT;
+                if (dt > 0) {
+                    dragRef.current.velocity =
+                        (moveEvent.clientX - dragRef.current.lastX) / dt;
+                }
+                dragRef.current.lastX = moveEvent.clientX;
+                dragRef.current.lastT = nowMove;
 
-    const openInvitation = useCallback(() => {
-        if (phaseRef.current !== 'idle') {
-            return;
-        }
+                const raw =
+                    dragRef.current.originOffset +
+                    (moveEvent.clientX - dragRef.current.startX);
+                paintOffset(applyResistance(raw, window.innerWidth), null);
+            };
 
-        setPhaseSafe('fadingText');
+            const onUp = (upEvent: PointerEvent) => {
+                if (upEvent.pointerId !== dragRef.current.pointerId) {
+                    return;
+                }
 
-        schedule(() => {
-            startSealFade();
-        }, TEXT_MS);
-    }, [schedule, setPhaseSafe, startSealFade]);
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', onUp);
+                window.removeEventListener('pointercancel', onUp);
+                stopDragging();
+            };
+
+            window.addEventListener('pointermove', onMove, { passive: false });
+            window.addEventListener('pointerup', onUp);
+            window.addEventListener('pointercancel', onUp);
+        },
+        [paintOffset, setPhaseSafe, stopDragging],
+    );
 
     useEffect(() => {
         const previousHtml = document.documentElement.style.overflow;
         const previousBody = document.body.style.overflow;
+        const previousTouchAction = document.body.style.touchAction;
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
 
         return () => {
             document.documentElement.style.overflow = previousHtml;
             document.body.style.overflow = previousBody;
+            document.body.style.touchAction = previousTouchAction;
             clearTimers();
         };
     }, [clearTimers]);
@@ -280,104 +269,74 @@ export default function WeddingEnvelopeIntro({
         return null;
     }
 
-    const isOpening = phase === 'opening' || phase === 'splitting';
-    const isSplitting = phase === 'splitting';
-    const textHidden = phase !== 'idle';
-    const sealHidden =
-        phase === 'cracking' || phase === 'opening' || isSplitting;
-
     return (
         <div
             className="fixed inset-0 z-[60] h-[100dvh] w-screen overflow-hidden"
-            style={{
-                backgroundColor: isSplitting ? 'transparent' : ENVELOPE.body,
-            }}
             role="dialog"
             aria-modal="true"
             aria-label="Open wedding invitation"
         >
-            <button
-                type="button"
-                onClick={openInvitation}
-                disabled={phase !== 'idle'}
-                aria-label="Tap the envelope to open"
+            <div
+                ref={panelRef}
+                role="button"
+                tabIndex={0}
+                aria-label="Slide the seal to open the invitation"
+                onPointerDown={onPointerDown}
+                onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        completeOpen(1);
+                    }
+                }}
                 className={cn(
-                    'absolute inset-0 h-full w-full appearance-none border-0 bg-transparent p-0 touch-manipulation select-none',
-                    phase === 'idle' ? 'cursor-pointer' : 'cursor-default',
+                    'absolute inset-0 touch-none select-none will-change-transform',
+                    phase === 'opening'
+                        ? 'cursor-default'
+                        : 'cursor-grab active:cursor-grabbing',
                 )}
+                style={{ backgroundColor: COLORS.cream }}
             >
-                <CurtainHalf
-                    side="left"
-                    isSplitting={isSplitting}
-                    flapOpen={isOpening}
-                />
-                <CurtainHalf
-                    side="right"
-                    isSplitting={isSplitting}
-                    flapOpen={isOpening}
-                />
-
-                {/* Seal where the flap tip meets the pocket */}
                 <div
-                    className="pointer-events-none absolute z-30 transition-opacity duration-[900ms] ease-out"
+                    className="pointer-events-none absolute inset-x-0 z-10 flex flex-col items-center px-6 text-center transition-opacity duration-300 ease-out"
                     style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        opacity: sealHidden ? 0 : 1,
+                        top: `calc(50% - (${SEAL_SIZE} / 2) - 0.75rem)`,
+                        transform: 'translateY(-100%)',
+                        opacity: copyHidden ? 0 : 1,
                     }}
                 >
-                    <picture>
-                        <source
-                            srcSet="/images/envelope/seal.webp"
-                            type="image/webp"
-                        />
-                        <img
-                            src="/images/envelope/seal.png"
-                            alt=""
-                            width={1000}
-                            height={1000}
-                            className="object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.28)]"
-                            style={{
-                                width: 'min(22vmin, 8.5rem)',
-                                height: 'min(22vmin, 8.5rem)',
-                            }}
-                            draggable={false}
-                            decoding="async"
-                        />
-                    </picture>
+                    <p
+                        className="mb-1.5 font-sans text-[0.7rem] tracking-[0.45em] uppercase sm:mb-2 sm:text-xs"
+                        style={{ color: COLORS.sage }}
+                    >
+                        Save the Date
+                    </p>
+                    <h1 className="font-script text-7xl leading-tight text-wedding-navy sm:text-8xl">
+                        You&apos;re Invited!
+                    </h1>
                 </div>
-            </button>
 
-            {/* Titles sit just above the seal */}
-            <div
-                className="pointer-events-none absolute inset-x-0 z-40 flex flex-col items-center px-6 text-center transition-opacity duration-[800ms] ease-out"
-                style={{
-                    top: 'calc(50% - min(11vmin, 4.25rem) - 0.75rem)',
-                    transform: 'translateY(-100%)',
-                    opacity: textHidden ? 0 : 1,
-                }}
-            >
-                <p
-                    className="mb-1.5 font-sans text-[0.7rem] tracking-[0.45em] uppercase sm:mb-2 sm:text-xs"
-                    style={{ color: COLORS.sage }}
+                <div
+                    className="pointer-events-none absolute top-1/2 left-1/2 z-20"
+                    style={{
+                        width: SEAL_SIZE,
+                        height: SEAL_SIZE,
+                        transform: 'translate(-50%, -50%)',
+                    }}
                 >
-                    Save the Date
-                </p>
-                <h1 className="font-script text-7xl leading-tight text-wedding-navy sm:text-8xl">
-                    You&apos;re Invited!
-                </h1>
-            </div>
+                    <SealImage />
+                </div>
 
-            <p
-                className="pointer-events-none absolute inset-x-0 bottom-8 z-40 text-center font-sans text-[0.65rem] tracking-[0.2em] uppercase transition-opacity duration-[800ms] ease-out sm:bottom-10 sm:text-xs"
-                style={{
-                    color: COLORS.sage,
-                    opacity: textHidden ? 0 : 1,
-                }}
-            >
-                Tap to open
-            </p>
+                <p
+                    className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.65rem] tracking-[0.2em] uppercase transition-opacity duration-300 ease-out sm:text-xs"
+                    style={{
+                        top: `calc(50% + (${SEAL_SIZE} / 2) + 0.75rem)`,
+                        color: COLORS.sage,
+                        opacity: copyHidden ? 0 : 1,
+                    }}
+                >
+                    Slide the seal to open the invitation
+                </p>
+            </div>
         </div>
     );
 }
