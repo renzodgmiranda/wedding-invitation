@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import WeddingAttireSection from '@/components/wedding-attire-section';
 import WeddingCountdown from '@/components/wedding-countdown';
 import WeddingEnvelopeIntro, {
@@ -15,6 +15,8 @@ import WeddingRsvpSection from '@/components/wedding-rsvp-section';
 import WeddingVenueSection from '@/components/wedding-venue-section';
 import { cn } from '@/lib/utils';
 
+const PAGE_BLUR_MS = 1400;
+
 export default function Welcome() {
     const [showIntro, setShowIntro] = useState(
         () => !hasOpenedInvitation(),
@@ -22,6 +24,22 @@ export default function Welcome() {
     const [pageBlurred, setPageBlurred] = useState(
         () => !hasOpenedInvitation(),
     );
+    const [showBlurOverlay, setShowBlurOverlay] = useState(
+        () => !hasOpenedInvitation(),
+    );
+
+    useEffect(() => {
+        if (pageBlurred) {
+            setShowBlurOverlay(true);
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            setShowBlurOverlay(false);
+        }, PAGE_BLUR_MS);
+
+        return () => window.clearTimeout(timer);
+    }, [pageBlurred]);
 
     return (
         <>
@@ -29,10 +47,7 @@ export default function Welcome() {
             <WeddingMusic enabled={!showIntro} />
 
             <div
-                className={cn(
-                    'min-h-screen bg-wedding-cream transition-[filter] duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-                    pageBlurred && 'blur-[12px]',
-                )}
+                className="min-h-screen bg-wedding-cream"
                 aria-hidden={showIntro ? true : undefined}
             >
                 <WeddingMotifStripe />
@@ -95,6 +110,18 @@ export default function Welcome() {
                 <WeddingRemindersSection />
                 <WeddingRsvpSection />
             </div>
+
+            {showBlurOverlay ? (
+                <div
+                    className={cn(
+                        'pointer-events-none fixed inset-0 z-[55] transition-[opacity,backdrop-filter] duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
+                        pageBlurred
+                            ? 'bg-wedding-navy/[0.06] opacity-100 backdrop-blur-[12px]'
+                            : 'bg-transparent opacity-0 backdrop-blur-none',
+                    )}
+                    aria-hidden="true"
+                />
+            ) : null}
 
             {showIntro ? (
                 <WeddingEnvelopeIntro
