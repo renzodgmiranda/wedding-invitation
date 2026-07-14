@@ -53,27 +53,32 @@ function GalleryFrame({
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
-                featured && 'mb-3 sm:mb-5',
+                'relative shrink-0 snap-center self-end',
+                featured && 'max-lg:z-10 lg:mb-5',
             )}
         >
-            <img
-                src={src}
-                alt={alt}
+            <div
                 className={cn(
-                    'block transition-[height] duration-300 ease-out max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
-                    featured
-                        ? 'h-96 sm:h-[28rem] lg:h-[32rem]'
-                        : 'h-80 sm:h-96 lg:h-[28rem]',
+                    'relative origin-bottom overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out will-change-transform',
+                    featured && 'max-lg:scale-[1.12]',
                 )}
-                loading={featured ? 'eager' : 'lazy'}
-                decoding="async"
-                draggable={false}
-            />
-            <span
-                className="absolute inset-x-0 top-0 h-0.5 bg-wedding-gold/70"
-                aria-hidden="true"
-            />
+            >
+                <img
+                    src={src}
+                    alt={alt}
+                    className={cn(
+                        'block h-80 transition-[height] duration-300 ease-out sm:h-96 max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
+                        featured ? 'lg:h-[32rem]' : 'lg:h-[28rem]',
+                    )}
+                    loading={featured ? 'eager' : 'lazy'}
+                    decoding="async"
+                    draggable={false}
+                />
+                <span
+                    className="absolute inset-x-0 top-0 h-0.5 bg-wedding-gold/70"
+                    aria-hidden="true"
+                />
+            </div>
         </figure>
     );
 }
@@ -178,7 +183,7 @@ export default function WeddingGallerySection() {
             return;
         }
 
-        let settleTimer = 0;
+        let rafId = 0;
 
         const syncActiveFromScroll = () => {
             const closest = getClosestIndex();
@@ -192,12 +197,22 @@ export default function WeddingGallerySection() {
         };
 
         const onScroll = () => {
-            window.clearTimeout(settleTimer);
-            settleTimer = window.setTimeout(syncActiveFromScroll, 80);
+            if (rafId !== 0) {
+                return;
+            }
+
+            rafId = window.requestAnimationFrame(() => {
+                rafId = 0;
+                syncActiveFromScroll();
+            });
         };
 
         const onScrollEnd = () => {
-            window.clearTimeout(settleTimer);
+            if (rafId !== 0) {
+                window.cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+
             syncActiveFromScroll();
         };
 
@@ -205,7 +220,10 @@ export default function WeddingGallerySection() {
         scroller.addEventListener('scrollend', onScrollEnd);
 
         return () => {
-            window.clearTimeout(settleTimer);
+            if (rafId !== 0) {
+                window.cancelAnimationFrame(rafId);
+            }
+
             scroller.removeEventListener('scroll', onScroll);
             scroller.removeEventListener('scrollend', onScrollEnd);
         };
