@@ -85,10 +85,8 @@ export default function Welcome() {
                         src="/images/background/bg-day.webp"
                         alt=""
                         className={cn(
-                            'absolute inset-0 h-full w-full object-cover transition-[filter,transform] duration-[1400ms]',
-                            pageBlurred
-                                ? 'scale-[1.04] blur-[16px]'
-                                : 'scale-100 blur-0',
+                            'absolute inset-0 h-full w-full object-cover transition-[filter] duration-[1400ms]',
+                            pageBlurred ? 'blur-[16px]' : 'blur-0',
                         )}
                         style={{ transitionTimingFunction: REVEAL_EASE }}
                     />
