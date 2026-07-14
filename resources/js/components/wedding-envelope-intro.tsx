@@ -27,6 +27,8 @@ export function markInvitationOpened(): void {
 
 const COLORS = {
     navy: '#1a2437',
+    slate: '#323b62',
+    forest: '#2f443f',
     sage: '#53736e',
     gold: '#cbb079',
     cream: '#f9f7f3',
@@ -314,8 +316,21 @@ export default function WeddingEnvelopeIntro({
                         aria-hidden="true"
                     />
                     <h1
-                        className="font-invite text-[4.25rem] leading-[0.95] tracking-wide text-wedding-navy sm:text-8xl"
-                        style={{ color: COLORS.navy }}
+                        className="font-invite overflow-visible px-3 py-4 text-[4.25rem] leading-none tracking-wide sm:px-4 sm:py-5 sm:text-8xl"
+                        style={{
+                            backgroundImage: `linear-gradient(
+                                115deg,
+                                ${COLORS.navy} 0%,
+                                ${COLORS.slate} 28%,
+                                ${COLORS.forest} 52%,
+                                ${COLORS.sage} 76%,
+                                ${COLORS.gold} 100%
+                            )`,
+                            WebkitBackgroundClip: 'text',
+                            backgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            color: 'transparent',
+                        }}
                     >
                         You&apos;re Invited!
                     </h1>
