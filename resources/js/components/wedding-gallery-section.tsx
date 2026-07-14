@@ -37,6 +37,7 @@ const GALLERY_ITEMS = [
 ] as const;
 
 const MIDDLE_INDEX = Math.floor(GALLERY_ITEMS.length / 2);
+const SCROLL_SETTLE_MS = 120;
 
 function GalleryFrame({
     src,
@@ -53,24 +54,24 @@ function GalleryFrame({
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center self-end',
-                featured && 'max-lg:z-10 lg:mb-5',
+                'relative shrink-0 snap-center max-lg:self-center lg:self-end',
+                featured && 'max-lg:z-10',
             )}
         >
             <div
                 className={cn(
-                    'relative overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out will-change-transform',
-                    featured && 'max-lg:-translate-y-3',
+                    'relative overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-transform duration-300 ease-out',
+                    featured
+                        ? 'max-lg:scale-[1.03] lg:mb-5'
+                        : 'max-lg:scale-100',
                 )}
             >
                 <img
                     src={src}
                     alt={alt}
                     className={cn(
-                        'block transition-[height] duration-300 ease-out max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
-                        featured
-                            ? 'h-96 sm:h-[26rem] lg:h-[32rem]'
-                            : 'h-72 sm:h-96 lg:h-[28rem]',
+                        'block object-cover max-lg:h-80 max-lg:w-56 sm:max-lg:h-96 sm:max-lg:w-64 lg:w-auto lg:max-w-none lg:object-cover',
+                        featured ? 'lg:h-[32rem]' : 'lg:h-[28rem]',
                     )}
                     loading={featured ? 'eager' : 'lazy'}
                     decoding="async"
@@ -89,6 +90,8 @@ export default function WeddingGallerySection() {
     const scrollerRef = useRef<HTMLDivElement>(null);
     const frameRefs = useRef<(HTMLElement | null)[]>([]);
     const activeIndexRef = useRef(MIDDLE_INDEX);
+    const settleTimerRef = useRef(0);
+    const isScrollingRef = useRef(false);
     const [activeIndex, setActiveIndex] = useState(MIDDLE_INDEX);
     const [isDesktop, setIsDesktop] = useState(false);
 
@@ -140,6 +143,17 @@ export default function WeddingGallerySection() {
         [],
     );
 
+    const commitActiveIndex = useCallback(() => {
+        const closest = getClosestIndex();
+
+        if (closest === activeIndexRef.current) {
+            return;
+        }
+
+        activeIndexRef.current = closest;
+        setActiveIndex(closest);
+    }, [getClosestIndex]);
+
     useEffect(() => {
         const media = window.matchMedia('(min-width: 1024px)');
         const syncDesktop = () => setIsDesktop(media.matches);
@@ -159,6 +173,10 @@ export default function WeddingGallerySection() {
         }
 
         const centerMiddle = () => {
+            if (isScrollingRef.current) {
+                return;
+            }
+
             scrollToIndex(MIDDLE_INDEX, 'auto');
         };
 
@@ -170,10 +188,17 @@ export default function WeddingGallerySection() {
             img.addEventListener('load', centerMiddle);
         }
 
-        window.addEventListener('resize', centerMiddle);
+        let resizeTimer = 0;
+        const onResize = () => {
+            window.clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(centerMiddle, 150);
+        };
+
+        window.addEventListener('resize', onResize);
 
         return () => {
-            window.removeEventListener('resize', centerMiddle);
+            window.clearTimeout(resizeTimer);
+            window.removeEventListener('resize', onResize);
             img?.removeEventListener('load', centerMiddle);
         };
     }, [isDesktop, scrollToIndex]);
@@ -185,51 +210,34 @@ export default function WeddingGallerySection() {
             return;
         }
 
-        let rafId = 0;
-
-        const syncActiveFromScroll = () => {
-            const closest = getClosestIndex();
-
-            if (closest === activeIndexRef.current) {
-                return;
-            }
-
-            activeIndexRef.current = closest;
-            setActiveIndex(closest);
+        const settleActive = () => {
+            isScrollingRef.current = false;
+            commitActiveIndex();
         };
 
         const onScroll = () => {
-            if (rafId !== 0) {
-                return;
-            }
-
-            rafId = window.requestAnimationFrame(() => {
-                rafId = 0;
-                syncActiveFromScroll();
-            });
+            isScrollingRef.current = true;
+            window.clearTimeout(settleTimerRef.current);
+            settleTimerRef.current = window.setTimeout(
+                settleActive,
+                SCROLL_SETTLE_MS,
+            );
         };
 
         const onScrollEnd = () => {
-            if (rafId !== 0) {
-                window.cancelAnimationFrame(rafId);
-                rafId = 0;
-            }
-
-            syncActiveFromScroll();
+            window.clearTimeout(settleTimerRef.current);
+            settleActive();
         };
 
         scroller.addEventListener('scroll', onScroll, { passive: true });
         scroller.addEventListener('scrollend', onScrollEnd);
 
         return () => {
-            if (rafId !== 0) {
-                window.cancelAnimationFrame(rafId);
-            }
-
+            window.clearTimeout(settleTimerRef.current);
             scroller.removeEventListener('scroll', onScroll);
             scroller.removeEventListener('scrollend', onScrollEnd);
         };
-    }, [getClosestIndex, isDesktop]);
+    }, [commitActiveIndex, isDesktop]);
 
     return (
         <section className="overflow-hidden bg-wedding-ivory px-6 py-20">
@@ -251,7 +259,8 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex h-[26rem] snap-x snap-mandatory items-end gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[29rem] sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        className="-mx-6 flex h-[21rem] snap-x snap-mandatory items-center gap-4 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[25rem] sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:items-end lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
                     >
                         {GALLERY_ITEMS.map((item, index) => {
                             const featured = isDesktop
