@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingReveal from '@/components/wedding-reveal';
 import { cn } from '@/lib/utils';
@@ -35,17 +36,22 @@ const GALLERY_ITEMS = [
     },
 ] as const;
 
+const MIDDLE_INDEX = Math.floor(GALLERY_ITEMS.length / 2);
+
 function GalleryFrame({
     src,
     alt,
     size,
+    frameRef,
 }: {
     src: string;
     alt: string;
     size: 'md' | 'lg';
+    frameRef?: React.Ref<HTMLElement>;
 }) {
     return (
         <figure
+            ref={frameRef}
             className={cn(
                 'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory',
                 size === 'lg' && 'mb-3 sm:mb-5',
@@ -58,7 +64,7 @@ function GalleryFrame({
                     'block h-80 w-auto max-w-none sm:h-96 lg:h-[28rem]',
                     size === 'lg' && 'h-96 sm:h-[28rem] lg:h-[32rem]',
                 )}
-                loading="lazy"
+                loading={size === 'lg' ? 'eager' : 'lazy'}
                 decoding="async"
             />
             <span
@@ -70,6 +76,45 @@ function GalleryFrame({
 }
 
 export default function WeddingGallerySection() {
+    const scrollerRef = useRef<HTMLDivElement>(null);
+    const middleRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const scroller = scrollerRef.current;
+        const middle = middleRef.current;
+
+        if (!scroller || !middle) {
+            return;
+        }
+
+        const centerMiddle = () => {
+            if (window.matchMedia('(min-width: 1024px)').matches) {
+                return;
+            }
+
+            const left =
+                middle.offsetLeft -
+                (scroller.clientWidth - middle.offsetWidth) / 2;
+
+            scroller.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
+        };
+
+        centerMiddle();
+
+        const img = middle.querySelector('img');
+
+        if (img && !img.complete) {
+            img.addEventListener('load', centerMiddle);
+        }
+
+        window.addEventListener('resize', centerMiddle);
+
+        return () => {
+            window.removeEventListener('resize', centerMiddle);
+            img?.removeEventListener('load', centerMiddle);
+        };
+    }, []);
+
     return (
         <section className="overflow-hidden bg-wedding-ivory px-6 py-20">
             <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
@@ -88,13 +133,21 @@ export default function WeddingGallerySection() {
                 </WeddingReveal>
 
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
-                    <div className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto px-6 pb-4 sm:gap-5 lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
-                        {GALLERY_ITEMS.map((item) => (
+                    <div
+                        ref={scrollerRef}
+                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto px-6 pb-4 sm:gap-5 lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
+                    >
+                        {GALLERY_ITEMS.map((item, index) => (
                             <GalleryFrame
                                 key={item.id}
                                 src={item.src}
                                 alt={item.alt}
                                 size={item.size}
+                                frameRef={
+                                    index === MIDDLE_INDEX
+                                        ? middleRef
+                                        : undefined
+                                }
                             />
                         ))}
                     </div>
