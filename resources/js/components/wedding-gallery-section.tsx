@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import WeddingOrnament from '@/components/wedding-ornament';
 import WeddingReveal from '@/components/wedding-reveal';
 import { cn } from '@/lib/utils';
@@ -41,30 +41,32 @@ const MIDDLE_INDEX = Math.floor(GALLERY_ITEMS.length / 2);
 function GalleryFrame({
     src,
     alt,
-    size,
+    featured,
     frameRef,
 }: {
     src: string;
     alt: string;
-    size: 'md' | 'lg';
+    featured: boolean;
     frameRef?: React.Ref<HTMLElement>;
 }) {
     return (
         <figure
             ref={frameRef}
             className={cn(
-                'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory',
-                size === 'lg' && 'mb-3 sm:mb-5',
+                'relative shrink-0 snap-center self-end overflow-hidden border border-wedding-sage/20 bg-wedding-ivory transition-[margin] duration-300 ease-out',
+                featured && 'mb-3 sm:mb-5',
             )}
         >
             <img
                 src={src}
                 alt={alt}
                 className={cn(
-                    'block h-80 w-auto max-w-none sm:h-96 lg:h-[28rem]',
-                    size === 'lg' && 'h-96 sm:h-[28rem] lg:h-[32rem]',
+                    'block transition-[height] duration-300 ease-out max-lg:w-56 max-lg:object-cover sm:max-lg:w-64 lg:w-auto lg:max-w-none',
+                    featured
+                        ? 'h-96 sm:h-[28rem] lg:h-[32rem]'
+                        : 'h-80 sm:h-96 lg:h-[28rem]',
                 )}
-                loading={size === 'lg' ? 'eager' : 'lazy'}
+                loading={featured ? 'eager' : 'lazy'}
                 decoding="async"
             />
             <span
@@ -77,26 +79,35 @@ function GalleryFrame({
 
 export default function WeddingGallerySection() {
     const scrollerRef = useRef<HTMLDivElement>(null);
-    const middleRef = useRef<HTMLElement>(null);
+    const frameRefs = useRef<(HTMLElement | null)[]>([]);
+    const [activeIndex, setActiveIndex] = useState(MIDDLE_INDEX);
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const media = window.matchMedia('(min-width: 1024px)');
+        const syncDesktop = () => setIsDesktop(media.matches);
+
+        syncDesktop();
+        media.addEventListener('change', syncDesktop);
+
+        return () => media.removeEventListener('change', syncDesktop);
+    }, []);
 
     useEffect(() => {
         const scroller = scrollerRef.current;
-        const middle = middleRef.current;
+        const middle = frameRefs.current[MIDDLE_INDEX];
 
-        if (!scroller || !middle) {
+        if (!scroller || !middle || isDesktop) {
             return;
         }
 
         const centerMiddle = () => {
-            if (window.matchMedia('(min-width: 1024px)').matches) {
-                return;
-            }
-
             const left =
                 middle.offsetLeft -
                 (scroller.clientWidth - middle.offsetWidth) / 2;
 
             scroller.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
+            setActiveIndex(MIDDLE_INDEX);
         };
 
         centerMiddle();
@@ -113,7 +124,60 @@ export default function WeddingGallerySection() {
             window.removeEventListener('resize', centerMiddle);
             img?.removeEventListener('load', centerMiddle);
         };
-    }, []);
+    }, [isDesktop]);
+
+    useEffect(() => {
+        const scroller = scrollerRef.current;
+
+        if (!scroller || isDesktop) {
+            return;
+        }
+
+        let frame = 0;
+
+        const updateActive = () => {
+            frame = 0;
+            const scrollerCenter = scroller.scrollLeft + scroller.clientWidth / 2;
+            let closestIndex = MIDDLE_INDEX;
+            let closestDistance = Number.POSITIVE_INFINITY;
+
+            frameRefs.current.forEach((frameEl, index) => {
+                if (!frameEl) {
+                    return;
+                }
+
+                const frameCenter = frameEl.offsetLeft + frameEl.offsetWidth / 2;
+                const distance = Math.abs(frameCenter - scrollerCenter);
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            setActiveIndex((current) =>
+                current === closestIndex ? current : closestIndex,
+            );
+        };
+
+        const onScroll = () => {
+            if (frame) {
+                return;
+            }
+
+            frame = window.requestAnimationFrame(updateActive);
+        };
+
+        scroller.addEventListener('scroll', onScroll, { passive: true });
+        updateActive();
+
+        return () => {
+            scroller.removeEventListener('scroll', onScroll);
+            if (frame) {
+                window.cancelAnimationFrame(frame);
+            }
+        };
+    }, [isDesktop]);
 
     return (
         <section className="overflow-hidden bg-wedding-ivory px-6 py-20">
@@ -135,21 +199,25 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto px-6 pb-4 sm:gap-5 lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
+                        className="-mx-6 flex snap-x snap-mandatory items-end gap-4 overflow-x-auto px-[max(1.5rem,calc(50%-7rem))] pb-4 sm:gap-5 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
                     >
-                        {GALLERY_ITEMS.map((item, index) => (
-                            <GalleryFrame
-                                key={item.id}
-                                src={item.src}
-                                alt={item.alt}
-                                size={item.size}
-                                frameRef={
-                                    index === MIDDLE_INDEX
-                                        ? middleRef
-                                        : undefined
-                                }
-                            />
-                        ))}
+                        {GALLERY_ITEMS.map((item, index) => {
+                            const featured = isDesktop
+                                ? item.size === 'lg'
+                                : index === activeIndex;
+
+                            return (
+                                <GalleryFrame
+                                    key={item.id}
+                                    src={item.src}
+                                    alt={item.alt}
+                                    featured={featured}
+                                    frameRef={(el) => {
+                                        frameRefs.current[index] = el;
+                                    }}
+                                />
+                            );
+                        })}
                     </div>
                 </WeddingReveal>
             </div>
