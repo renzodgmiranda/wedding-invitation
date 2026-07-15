@@ -323,7 +323,7 @@ export default function WeddingEnvelopeIntro({
                                 ${COLORS.navy} 0%,
                                 ${COLORS.slate} 28%,
                                 ${COLORS.forest} 52%,
-                                ${COLORS.sage} 76%,
+                                ${COLORS.sage} 80%,
                                 ${COLORS.gold} 100%
                             )`,
                             WebkitBackgroundClip: 'text',
@@ -379,11 +379,11 @@ export default function WeddingEnvelopeIntro({
                 </div>
 
                 <p
-                    className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.6rem] tracking-[0.28em] uppercase transition-opacity duration-300 ease-out sm:text-[0.65rem]"
+                    className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.65rem] tracking-[0.28em] uppercase transition-opacity duration-300 ease-out sm:text-[0.7rem]"
                     style={{
                         top: `calc(50% + (${SEAL_SIZE} / 2) + 1.1rem)`,
                         color: COLORS.sage,
-                        opacity: copyHidden ? 0 : 0.85,
+                        opacity: copyHidden ? 0 : 1,
                     }}
                 >
                     Slide to open
