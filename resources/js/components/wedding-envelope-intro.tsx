@@ -73,18 +73,16 @@ type Phase = 'idle' | 'fading_copy' | 'fading_seal' | 'opening' | 'done';
 
 function SealImage() {
     return (
-        <picture>
-            <source srcSet="/images/envelope/seal.webp" type="image/webp" />
-            <img
-                src="/images/envelope/seal.png"
-                alt=""
-                width={1000}
-                height={1000}
-                className="h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(26,36,55,0.12)]"
-                draggable={false}
-                decoding="async"
-            />
-        </picture>
+        <div
+            aria-hidden="true"
+            className="h-full w-full bg-contain bg-center bg-no-repeat drop-shadow-[0_10px_24px_rgba(26,36,55,0.12)]"
+            style={{
+                backgroundImage: `image-set(
+                    url('/images/envelope/seal.webp') type('image/webp'),
+                    url('/images/envelope/seal.png') type('image/png')
+                )`,
+            }}
+        />
     );
 }
 
