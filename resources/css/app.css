@@ -160,15 +160,3 @@
     }
 }
 
-@keyframes envelope-nudge-right {
-    0%,
-    100% {
-        transform: translateX(0);
-        opacity: 0.4;
-    }
-
-    50% {
-        transform: translateX(3px);
-        opacity: 0.7;
-    }
-}

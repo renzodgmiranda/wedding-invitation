@@ -14,12 +14,12 @@ import WeddingRsvpSection from '@/components/wedding-rsvp-section';
 import WeddingVenueSection from '@/components/wedding-venue-section';
 import { cn } from '@/lib/utils';
 
-const PAGE_BLUR_MS = 1400;
-/** Let the envelope start sliding before the page begins to clear. */
-const PAGE_UNBLUR_DELAY_MS = 300;
-/** Half-beat after unblur starts — hero copy settles in. */
-const HERO_REVEAL_DELAY_MS = PAGE_UNBLUR_DELAY_MS + 380;
-const REVEAL_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const PAGE_BLUR_MS = 1800;
+/** Let the curtains begin parting before the page begins to clear. */
+const PAGE_UNBLUR_DELAY_MS = 700;
+/** Soft beat after unblur starts — hero copy settles in. */
+const HERO_REVEAL_DELAY_MS = PAGE_UNBLUR_DELAY_MS + 650;
+const REVEAL_EASE = 'cubic-bezier(0.45, 0.02, 0.2, 1)';
 
 export default function Welcome() {
     const [showIntro, setShowIntro] = useState(
