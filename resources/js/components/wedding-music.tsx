@@ -2,6 +2,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const MUSIC_SRC = '/music/is-it-you.webm';
+const MUSIC_VOLUME = 0.55;
 
 const UNLOCK_EVENTS: Array<keyof DocumentEventMap> = [
     'pointerdown',
@@ -18,6 +19,7 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const enabledRef = useRef(enabled);
     const unlockedRef = useRef(false);
+    const unlockingRef = useRef(false);
     const [playing, setPlaying] = useState(false);
 
     enabledRef.current = enabled;
@@ -26,7 +28,7 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
         const audio = new Audio(MUSIC_SRC);
         audio.loop = true;
         audio.preload = 'auto';
-        audio.volume = 0.55;
+        audio.volume = MUSIC_VOLUME;
         audioRef.current = audio;
 
         const markPlaying = () => setPlaying(true);
@@ -39,23 +41,36 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
          * Seal hold / curtain open happens via timers, so play() after the
          * intro often sits outside the browser's user-gesture window. Priming
          * on the first interaction unlocks later autoplay when curtains part.
+         *
+         * Keep volume at 0 during the prime so the first page never audibly
+         * plays — only resume at normal volume once `enabled` is true.
          */
         const unlock = () => {
-            if (unlockedRef.current) {
+            if (unlockedRef.current || unlockingRef.current) {
                 return;
             }
+
+            unlockingRef.current = true;
+            audio.volume = 0;
 
             void audio
                 .play()
                 .then(() => {
                     unlockedRef.current = true;
+                    unlockingRef.current = false;
 
                     if (!enabledRef.current) {
                         audio.pause();
                         audio.currentTime = 0;
+                        audio.volume = MUSIC_VOLUME;
+                        return;
                     }
+
+                    audio.volume = MUSIC_VOLUME;
                 })
                 .catch(() => {
+                    unlockingRef.current = false;
+                    audio.volume = MUSIC_VOLUME;
                     // Still blocked — keep listeners for a later gesture.
                 });
         };
@@ -88,12 +103,18 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
             return;
         }
 
+        audio.volume = MUSIC_VOLUME;
+
         const tryPlay = () => {
-            void audio.play().then(() => {
-                unlockedRef.current = true;
-            }).catch(() => {
-                // Browsers often block autoplay until a user gesture.
-            });
+            void audio
+                .play()
+                .then(() => {
+                    unlockedRef.current = true;
+                    audio.volume = MUSIC_VOLUME;
+                })
+                .catch(() => {
+                    // Browsers often block autoplay until a user gesture.
+                });
         };
 
         tryPlay();
