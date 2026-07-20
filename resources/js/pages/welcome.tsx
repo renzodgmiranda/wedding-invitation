@@ -34,6 +34,10 @@ export default function Welcome() {
     const [heroVisible, setHeroVisible] = useState(() =>
         hasOpenedInvitation(),
     );
+    /** Start music when curtains part — not only after the intro unmounts. */
+    const [musicEnabled, setMusicEnabled] = useState(() =>
+        hasOpenedInvitation(),
+    );
     const openTimersRef = useRef<number[]>([]);
 
     useEffect(() => {
@@ -59,6 +63,8 @@ export default function Welcome() {
         openTimersRef.current.forEach((timer) => window.clearTimeout(timer));
         openTimersRef.current = [];
 
+        setMusicEnabled(true);
+
         openTimersRef.current.push(
             window.setTimeout(() => {
                 setPageBlurred(false);
@@ -72,7 +78,7 @@ export default function Welcome() {
     return (
         <>
             <Head title="" />
-            <WeddingMusic enabled={!showIntro} />
+            <WeddingMusic enabled={musicEnabled} />
 
             <div
                 className="min-h-screen bg-wedding-cream"

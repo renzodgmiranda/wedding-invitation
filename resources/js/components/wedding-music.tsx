@@ -1,7 +1,13 @@
 import { Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-const MUSIC_SRC = '/music/spring-waltz.webm';
+const MUSIC_SRC = '/music/is-it-you.webm';
+
+const UNLOCK_EVENTS: Array<keyof DocumentEventMap> = [
+    'pointerdown',
+    'touchstart',
+    'keydown',
+];
 
 type WeddingMusicProps = {
     /** When false, audio is held silent (e.g. seal intro still showing). */
@@ -10,7 +16,11 @@ type WeddingMusicProps = {
 
 export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const enabledRef = useRef(enabled);
+    const unlockedRef = useRef(false);
     const [playing, setPlaying] = useState(false);
+
+    enabledRef.current = enabled;
 
     useEffect(() => {
         const audio = new Audio(MUSIC_SRC);
@@ -25,7 +35,39 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
         audio.addEventListener('play', markPlaying);
         audio.addEventListener('pause', markPaused);
 
+        /**
+         * Seal hold / curtain open happens via timers, so play() after the
+         * intro often sits outside the browser's user-gesture window. Priming
+         * on the first interaction unlocks later autoplay when curtains part.
+         */
+        const unlock = () => {
+            if (unlockedRef.current) {
+                return;
+            }
+
+            void audio
+                .play()
+                .then(() => {
+                    unlockedRef.current = true;
+
+                    if (!enabledRef.current) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                })
+                .catch(() => {
+                    // Still blocked — keep listeners for a later gesture.
+                });
+        };
+
+        UNLOCK_EVENTS.forEach((event) => {
+            document.addEventListener(event, unlock);
+        });
+
         return () => {
+            UNLOCK_EVENTS.forEach((event) => {
+                document.removeEventListener(event, unlock);
+            });
             audio.removeEventListener('play', markPlaying);
             audio.removeEventListener('pause', markPaused);
             audio.pause();
@@ -47,35 +89,31 @@ export default function WeddingMusic({ enabled = true }: WeddingMusicProps) {
         }
 
         const tryPlay = () => {
-            void audio.play().catch(() => {
+            void audio.play().then(() => {
+                unlockedRef.current = true;
+            }).catch(() => {
                 // Browsers often block autoplay until a user gesture.
             });
         };
 
         tryPlay();
 
-        const unlockEvents: Array<keyof DocumentEventMap> = [
-            'pointerdown',
-            'touchstart',
-            'keydown',
-        ];
-
         const unlock = () => {
             if (audio.paused) {
                 tryPlay();
             }
 
-            unlockEvents.forEach((event) => {
+            UNLOCK_EVENTS.forEach((event) => {
                 document.removeEventListener(event, unlock);
             });
         };
 
-        unlockEvents.forEach((event) => {
+        UNLOCK_EVENTS.forEach((event) => {
             document.addEventListener(event, unlock, { once: true });
         });
 
         return () => {
-            unlockEvents.forEach((event) => {
+            UNLOCK_EVENTS.forEach((event) => {
                 document.removeEventListener(event, unlock);
             });
         };
