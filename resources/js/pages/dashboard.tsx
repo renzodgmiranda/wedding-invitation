@@ -1,5 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { dashboard } from '@/routes';
 import { cn } from '@/lib/utils';
 
@@ -140,8 +142,7 @@ function PartyDetails({ party }: { party: Party | null }) {
     return (
         <div className="min-w-0">
             <p className="text-[0.8125rem] font-medium text-foreground tabular-nums">
-                +{party.size}{' '}
-                {party.size === 1 ? 'guest' : 'guests'}
+                +{party.size} {party.size === 1 ? 'guest' : 'guests'}
             </p>
             {names.length > 0 && (
                 <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-muted-foreground">
@@ -306,59 +307,110 @@ function PaginationPage({ link }: { link: PaginationLink }) {
     );
 }
 
-function RsvpMobileList({ rsvps }: { rsvps: RsvpEntry[] }) {
+function RsvpMobileList({
+    rsvps,
+    selectedIds,
+    onToggle,
+}: {
+    rsvps: RsvpEntry[];
+    selectedIds: Set<number>;
+    onToggle: (id: number) => void;
+}) {
     return (
         <ul className="divide-y divide-border/50 md:hidden">
-            {rsvps.map((rsvp) => (
-                <li key={rsvp.id} className="px-4 py-4">
-                    <div className="flex items-start gap-3.5">
-                        <GuestAvatar name={rsvp.name} />
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="truncate text-[0.9375rem] font-medium tracking-tight text-foreground">
-                                        {rsvp.name}
-                                    </p>
-                                    <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">
-                                        {rsvp.email}
-                                    </p>
+            {rsvps.map((rsvp) => {
+                const selected = selectedIds.has(rsvp.id);
+
+                return (
+                    <li
+                        key={rsvp.id}
+                        className={cn(
+                            'px-4 py-4 transition-colors',
+                            selected && 'bg-muted/40',
+                        )}
+                    >
+                        <div className="flex items-start gap-3">
+                            <Checkbox
+                                checked={selected}
+                                onCheckedChange={() => onToggle(rsvp.id)}
+                                aria-label={`Select ${rsvp.name}`}
+                                className="mt-1"
+                            />
+                            <GuestAvatar name={rsvp.name} />
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-[0.9375rem] font-medium tracking-tight text-foreground">
+                                            {rsvp.name}
+                                        </p>
+                                        <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">
+                                            {rsvp.email}
+                                        </p>
+                                    </div>
+                                    <time
+                                        dateTime={rsvp.created_at ?? undefined}
+                                        className="shrink-0 pt-0.5 text-[0.75rem] text-muted-foreground tabular-nums"
+                                    >
+                                        {formatDate(rsvp.created_at)}
+                                    </time>
                                 </div>
-                                <time
-                                    dateTime={rsvp.created_at ?? undefined}
-                                    className="shrink-0 pt-0.5 text-[0.75rem] text-muted-foreground tabular-nums"
-                                >
-                                    {formatDate(rsvp.created_at)}
-                                </time>
-                            </div>
 
-                            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                <StatusBadge attending={rsvp.attending} />
-                            </div>
+                                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <StatusBadge attending={rsvp.attending} />
+                                </div>
 
-                            <div className="mt-3">
-                                <PartyDetails party={rsvp.party} />
-                            </div>
+                                <div className="mt-3">
+                                    <PartyDetails party={rsvp.party} />
+                                </div>
 
-                            {rsvp.message && (
-                                <p className="mt-3 text-[0.875rem] leading-relaxed text-foreground/80">
-                                    {rsvp.message}
-                                </p>
-                            )}
+                                {rsvp.message && (
+                                    <p className="mt-3 text-[0.875rem] leading-relaxed text-foreground/80">
+                                        {rsvp.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </li>
-            ))}
+                    </li>
+                );
+            })}
         </ul>
     );
 }
 
-function RsvpDesktopTable({ rsvps }: { rsvps: RsvpEntry[] }) {
+function RsvpDesktopTable({
+    rsvps,
+    selectedIds,
+    allSelected,
+    someSelected,
+    onToggle,
+    onToggleAll,
+}: {
+    rsvps: RsvpEntry[];
+    selectedIds: Set<number>;
+    allSelected: boolean;
+    someSelected: boolean;
+    onToggle: (id: number) => void;
+    onToggleAll: () => void;
+}) {
     return (
         <div className="hidden overflow-x-auto md:block">
             <table className="w-full border-collapse text-left">
                 <thead>
                     <tr className="border-b border-border/60 bg-muted/40">
-                        <th className="px-6 py-3.5 text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                        <th className="w-12 px-4 py-3.5 sm:px-6">
+                            <Checkbox
+                                checked={
+                                    allSelected
+                                        ? true
+                                        : someSelected
+                                          ? 'indeterminate'
+                                          : false
+                                }
+                                onCheckedChange={onToggleAll}
+                                aria-label="Select all RSVPs on this page"
+                            />
+                        </th>
+                        <th className="px-4 py-3.5 text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:px-6">
                             Guest
                         </th>
                         <th className="px-6 py-3.5 text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
@@ -376,51 +428,69 @@ function RsvpDesktopTable({ rsvps }: { rsvps: RsvpEntry[] }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {rsvps.map((rsvp) => (
-                        <tr
-                            key={rsvp.id}
-                            className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-muted/30"
-                        >
-                            <td className="px-6 py-4">
-                                <div className="flex items-center gap-3.5">
-                                    <GuestAvatar name={rsvp.name} />
-                                    <div className="min-w-0">
-                                        <p className="truncate text-[0.9375rem] font-medium tracking-tight text-foreground">
-                                            {rsvp.name}
-                                        </p>
-                                        <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">
-                                            {rsvp.email}
-                                        </p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <StatusBadge attending={rsvp.attending} />
-                            </td>
-                            <td className="max-w-xs px-6 py-4">
-                                <PartyDetails party={rsvp.party} />
-                            </td>
-                            <td className="max-w-md px-6 py-4">
-                                {rsvp.message ? (
-                                    <p className="line-clamp-2 text-[0.875rem] leading-relaxed text-foreground/80">
-                                        {rsvp.message}
-                                    </p>
-                                ) : (
-                                    <span className="text-[0.8125rem] text-muted-foreground/60">
-                                        —
-                                    </span>
+                    {rsvps.map((rsvp) => {
+                        const selected = selectedIds.has(rsvp.id);
+
+                        return (
+                            <tr
+                                key={rsvp.id}
+                                className={cn(
+                                    'border-b border-border/50 transition-colors last:border-b-0 hover:bg-muted/30',
+                                    selected && 'bg-muted/40',
                                 )}
-                            </td>
-                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                <time
-                                    dateTime={rsvp.created_at ?? undefined}
-                                    className="text-[0.8125rem] text-muted-foreground tabular-nums"
-                                >
-                                    {formatDate(rsvp.created_at)}
-                                </time>
-                            </td>
-                        </tr>
-                    ))}
+                            >
+                                <td className="px-4 py-4 sm:px-6">
+                                    <Checkbox
+                                        checked={selected}
+                                        onCheckedChange={() =>
+                                            onToggle(rsvp.id)
+                                        }
+                                        aria-label={`Select ${rsvp.name}`}
+                                    />
+                                </td>
+                                <td className="px-4 py-4 sm:px-6">
+                                    <div className="flex items-center gap-3.5">
+                                        <GuestAvatar name={rsvp.name} />
+                                        <div className="min-w-0">
+                                            <p className="truncate text-[0.9375rem] font-medium tracking-tight text-foreground">
+                                                {rsvp.name}
+                                            </p>
+                                            <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">
+                                                {rsvp.email}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <StatusBadge attending={rsvp.attending} />
+                                </td>
+                                <td className="max-w-xs px-6 py-4">
+                                    <PartyDetails party={rsvp.party} />
+                                </td>
+                                <td className="max-w-md px-6 py-4">
+                                    {rsvp.message ? (
+                                        <p className="line-clamp-2 text-[0.875rem] leading-relaxed text-foreground/80">
+                                            {rsvp.message}
+                                        </p>
+                                    ) : (
+                                        <span className="text-[0.8125rem] text-muted-foreground/60">
+                                            —
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-right whitespace-nowrap">
+                                    <time
+                                        dateTime={
+                                            rsvp.created_at ?? undefined
+                                        }
+                                        className="text-[0.8125rem] text-muted-foreground tabular-nums"
+                                    >
+                                        {formatDate(rsvp.created_at)}
+                                    </time>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
@@ -429,6 +499,80 @@ function RsvpDesktopTable({ rsvps }: { rsvps: RsvpEntry[] }) {
 
 export default function Dashboard({ stats, rsvps }: Props) {
     const entries = rsvps.data;
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [deleting, setDeleting] = useState(false);
+
+    const entryIdsKey = useMemo(
+        () => entries.map((entry) => entry.id).join(','),
+        [entries],
+    );
+
+    useEffect(() => {
+        setSelectedIds(new Set());
+    }, [rsvps.current_page, entryIdsKey]);
+
+    const allSelected = useMemo(
+        () =>
+            entries.length > 0 &&
+            entries.every((entry) => selectedIds.has(entry.id)),
+        [entries, selectedIds],
+    );
+
+    const someSelected = useMemo(
+        () => entries.some((entry) => selectedIds.has(entry.id)),
+        [entries, selectedIds],
+    );
+
+    const selectedCount = selectedIds.size;
+
+    const toggle = (id: number) => {
+        setSelectedIds((current) => {
+            const next = new Set(current);
+
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+
+            return next;
+        });
+    };
+
+    const toggleAll = () => {
+        if (allSelected) {
+            setSelectedIds(new Set());
+            return;
+        }
+
+        setSelectedIds(new Set(entries.map((entry) => entry.id)));
+    };
+
+    const deleteSelected = () => {
+        if (selectedCount === 0 || deleting) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            selectedCount === 1
+                ? "Delete this RSVP? This can't be undone."
+                : `Delete ${selectedCount} RSVPs? This can't be undone.`,
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setDeleting(true);
+        router.delete('/rsvps', {
+            data: { ids: Array.from(selectedIds) },
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setSelectedIds(new Set());
+            },
+        });
+    };
 
     return (
         <>
@@ -465,8 +609,62 @@ export default function Dashboard({ stats, rsvps }: Props) {
                         <EmptyState />
                     ) : (
                         <>
-                            <RsvpMobileList rsvps={entries} />
-                            <RsvpDesktopTable rsvps={entries} />
+                            <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-6">
+                                <div className="flex items-center gap-3 md:hidden">
+                                    <Checkbox
+                                        checked={
+                                            allSelected
+                                                ? true
+                                                : someSelected
+                                                  ? 'indeterminate'
+                                                  : false
+                                        }
+                                        onCheckedChange={toggleAll}
+                                        aria-label="Select all RSVPs on this page"
+                                    />
+                                    <span className="text-[0.8125rem] text-muted-foreground">
+                                        {selectedCount > 0
+                                            ? `${selectedCount} selected`
+                                            : 'Select'}
+                                    </span>
+                                </div>
+
+                                <p className="hidden text-[0.8125rem] text-muted-foreground md:block">
+                                    {selectedCount > 0
+                                        ? `${selectedCount} selected`
+                                        : 'Select responses to manage'}
+                                </p>
+
+                                <button
+                                    type="button"
+                                    onClick={deleteSelected}
+                                    disabled={selectedCount === 0 || deleting}
+                                    className={cn(
+                                        'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-colors',
+                                        selectedCount > 0
+                                            ? 'bg-red-600 text-white hover:bg-red-700'
+                                            : 'cursor-not-allowed bg-muted text-muted-foreground opacity-60',
+                                    )}
+                                >
+                                    <Trash2 className="size-3.5" />
+                                    Delete
+                                    {selectedCount > 0 ? ` (${selectedCount})` : ''}
+                                </button>
+                            </div>
+
+                            <RsvpMobileList
+                                rsvps={entries}
+                                selectedIds={selectedIds}
+                                onToggle={toggle}
+                            />
+                            <RsvpDesktopTable
+                                rsvps={entries}
+                                selectedIds={selectedIds}
+                                allSelected={allSelected}
+                                someSelected={someSelected}
+                                onToggle={toggle}
+                                onToggleAll={toggleAll}
+                            />
                             <Pagination rsvps={rsvps} />
                         </>
                     )}

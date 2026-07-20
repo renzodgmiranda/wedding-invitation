@@ -93,3 +93,32 @@ test('dashboard paginates rsvps ten per page', function () {
             ->where('rsvps.current_page', 2)
         );
 });
+
+test('authenticated users can bulk delete rsvps', function () {
+    $user = User::factory()->create();
+
+    $keep = Rsvp::create([
+        'name' => 'Keep Me',
+        'email' => 'keep@example.com',
+        'attending' => true,
+        'party' => ['size' => 0, 'names' => []],
+        'message' => 'Still coming',
+    ]);
+
+    $remove = Rsvp::create([
+        'name' => 'Remove Me',
+        'email' => 'remove@example.com',
+        'attending' => false,
+        'party' => ['size' => 0, 'names' => []],
+        'message' => 'Bye',
+    ]);
+
+    $this->actingAs($user);
+
+    $this->delete(route('rsvps.destroy'), [
+        'ids' => [$remove->id],
+    ])->assertRedirect();
+
+    expect(Rsvp::query()->whereKey($remove->id)->exists())->toBeFalse();
+    expect(Rsvp::query()->whereKey($keep->id)->exists())->toBeTrue();
+});
