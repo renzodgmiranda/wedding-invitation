@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import { Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
 import WeddingOrnament from '@/components/wedding-ornament';
@@ -364,6 +365,18 @@ export default function WeddingRsvpSection() {
                                                             },
                                                         )}
                                                     </select>
+                                                    <p className="flex items-start gap-2.5 border-l-2 border-wedding-gold bg-wedding-gold/10 px-3 py-2.5 text-sm leading-relaxed text-wedding-navy">
+                                                        <Info
+                                                            className="mt-0.5 size-4 shrink-0 text-wedding-gold"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span>
+                                                            Bringing a guest?
+                                                            Please check in with
+                                                            the couple before
+                                                            adding them.
+                                                        </span>
+                                                    </p>
                                                     <InputError
                                                         message={
                                                             errors[
