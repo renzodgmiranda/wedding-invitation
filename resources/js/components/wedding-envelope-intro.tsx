@@ -392,7 +392,7 @@ export default function WeddingEnvelopeIntro({
                 }}
             >
                 <p
-                    className="mb-3 font-sans text-[0.65rem] tracking-[0.4em] uppercase sm:text-[0.7rem]"
+                    className="mb-3 font-sans text-xs tracking-[0.4em] uppercase sm:text-sm"
                     style={{ color: COLORS.sage }}
                 >
                     Save the Date
@@ -464,7 +464,7 @@ export default function WeddingEnvelopeIntro({
             </div>
 
             <p
-                className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-[0.65rem] tracking-[0.28em] uppercase transition-opacity duration-[550ms] ease-out sm:text-[0.7rem]"
+                className="pointer-events-none absolute inset-x-0 z-10 px-6 text-center font-sans text-xs tracking-[0.28em] uppercase transition-opacity duration-[550ms] ease-out sm:text-sm"
                 style={{
                     top: `calc(50% + (${SEAL_SIZE} / 2) + 1.1rem)`,
                     color: COLORS.sage,
