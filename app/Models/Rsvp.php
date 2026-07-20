@@ -13,6 +13,7 @@ class Rsvp extends Model
         'name',
         'email',
         'attending',
+        'party',
         'message',
     ];
 
@@ -23,6 +24,7 @@ class Rsvp extends Model
     {
         return [
             'attending' => 'boolean',
+            'party' => 'array',
         ];
     }
 }

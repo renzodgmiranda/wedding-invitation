@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email');
             $table->boolean('attending');
+            $table->json('party')->nullable();
             $table->text('message')->nullable();
             $table->timestamps();
         });

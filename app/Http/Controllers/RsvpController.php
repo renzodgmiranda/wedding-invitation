@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRsvpRequest;
 use App\Models\Rsvp;
 use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
 
 class RsvpController extends Controller
 {
@@ -17,12 +16,11 @@ class RsvpController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'attending' => $validated['attending'],
+            'party' => [
+                'size' => (int) $validated['party']['size'],
+                'names' => array_values($validated['party']['names']),
+            ],
             'message' => $validated['message'] ?? null,
-        ]);
-
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => 'Thank you! Your RSVP has been received.',
         ]);
 
         return back();
