@@ -194,21 +194,24 @@ export default function WeddingAttireSection() {
             <div className="mx-auto mt-12 max-w-3xl px-6">
                 <WeddingReveal delayMs={140}>
                     <WeddingPanel className="space-y-12 px-6 py-12 sm:px-10 sm:py-14">
-                        <AttireBlock label="Attire" title="Formal Garden attire">
-                            An elevated look suited to an outdoor celebration —
-                            polished, comfortable, and at home in the garden.
+                        <AttireBlock label="Attire" title="Garden Formal">
+                            Dress to impress the flora! We&apos;re aiming for
+                            polished and picture-ready, but comfortable enough
+                            to mingle in the greenery (and yes, we expect you
+                            to dance under the stars.)
                         </AttireBlock>
 
-                        <AttireBlock title="Our color story">
-                            Deep blues, forest greens, sage, and soft gold
-                            accents echo the mood of our day. You are warmly
-                            invited to weave these tones into your outfit.
+                        <AttireBlock title="Our Color Palette">
+                            We&apos;d love for you to play along with our color
+                            story! Midnight, slate, forest green, sage, and soft
+                            gold are setting the mood for the day. Feel free to
+                            weave any of these shades into your outfit.
                         </AttireBlock>
 
-                        <AttireBlock title="Kindly avoid">
-                            White and ivory (reserved for the bride), loud
-                            neons, and overly casual wear such as shorts,
-                            flip-flops, or athletic attire.
+                        <AttireBlock title="A Quick Heads-Up">
+                            Please leave white and ivory to the bride, save the
+                            neon for rave night, and leave the casual wear at
+                            home.
                         </AttireBlock>
                     </WeddingPanel>
                 </WeddingReveal>
