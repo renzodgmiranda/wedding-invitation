@@ -1,7 +1,7 @@
 import { Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-const MUSIC_SRC = '/music/is-it-you.webm';
+const MUSIC_SRC = '/music/spring-rain.webm';
 const MUSIC_VOLUME = 0.55;
 
 const UNLOCK_EVENTS: Array<keyof DocumentEventMap> = [
