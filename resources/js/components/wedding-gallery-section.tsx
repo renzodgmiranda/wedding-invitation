@@ -262,7 +262,7 @@ export default function WeddingGallerySection() {
                 <WeddingReveal fadeOnly delayMs={100} className="w-full">
                     <div
                         ref={scrollerRef}
-                        className="-mx-6 flex h-[27rem] snap-x snap-mandatory items-end gap-7 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-2 [scrollbar-width:none] [-ms-overflow-style:none] touch-pan-x sm:h-[31rem] sm:gap-8 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
+                        className="-mx-6 flex h-[27rem] snap-x snap-mandatory items-end gap-7 overflow-x-auto overscroll-x-contain px-[max(1.5rem,calc(50%-7rem))] pb-2 [scrollbar-width:none] [-ms-overflow-style:none] touch-manipulation sm:h-[31rem] sm:gap-8 sm:px-[max(1.5rem,calc(50%-8rem))] lg:mx-0 lg:h-auto lg:justify-center lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:overscroll-auto [&::-webkit-scrollbar]:hidden"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                     >
                         {GALLERY_ITEMS.map((item, index) => {
