@@ -118,10 +118,7 @@ function RsvpConfirmationModal({
                             aria-hidden="true"
                             className="mb-6 size-16 rounded-full bg-contain bg-center bg-no-repeat drop-shadow-[0_8px_20px_rgba(26,36,55,0.16)]"
                             style={{
-                                backgroundImage: `image-set(
-                                    url('/images/envelope/seal.webp') type('image/webp'),
-                                    url('/images/envelope/seal.png') type('image/png')
-                                )`,
+                                backgroundImage: `url('/images/envelope/seal.webp')`,
                             }}
                         />
                     </ModalReveal>

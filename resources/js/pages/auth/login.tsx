@@ -61,10 +61,7 @@ export default function Login({ status }: Props) {
                     aria-hidden="true"
                     className="mb-10 size-28 rounded-full bg-contain bg-center bg-no-repeat drop-shadow-[0_12px_28px_rgba(26,36,55,0.14)]"
                     style={{
-                        backgroundImage: `image-set(
-                            url('/images/envelope/seal.webp') type('image/webp'),
-                            url('/images/envelope/seal.png') type('image/png')
-                        )`,
+                        backgroundImage: `url('/images/envelope/seal.webp')`,
                     }}
                 />
 
