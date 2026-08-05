@@ -5,6 +5,7 @@ use App\Http\Controllers\RsvpController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+Route::inertia('/inv', 'inv')->name('inv');
 
 Route::post('/rsvp', [RsvpController::class, 'store'])->name('rsvp.store');
 
