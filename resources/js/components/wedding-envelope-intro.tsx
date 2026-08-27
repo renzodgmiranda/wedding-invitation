@@ -73,12 +73,12 @@ type Phase = 'idle' | 'fading_copy' | 'fading_seal' | 'opening' | 'done';
 
 function SealImage() {
     return (
-        <div
+        <img
+            src="/images/envelope/seal.webp"
+            alt=""
             aria-hidden="true"
-            className="h-full w-full bg-contain bg-center bg-no-repeat drop-shadow-[0_10px_24px_rgba(26,36,55,0.12)]"
-            style={{
-                backgroundImage: `url('/images/envelope/seal.webp')`,
-            }}
+            draggable={false}
+            className="pointer-events-none h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(26,36,55,0.12)]"
         />
     );
 }
@@ -137,7 +137,7 @@ function HoldRing({ progress, active }: { progress: number; active: boolean }) {
     return (
         <canvas
             ref={canvasRef}
-            className="pointer-events-none absolute inset-0 h-full w-full transition-opacity duration-300 ease-out"
+            className="pointer-events-none absolute inset-0 h-full w-full bg-transparent transition-opacity duration-300 ease-out"
             aria-hidden="true"
             style={{ opacity: visible ? 0.9 : 0 }}
         />
@@ -281,7 +281,10 @@ export default function WeddingEnvelopeIntro({
                 return;
             }
 
-            const progress = Math.min(1, (now - holdStartRef.current) / HOLD_MS);
+            const progress = Math.min(
+                1,
+                (now - holdStartRef.current) / HOLD_MS,
+            );
             setHoldProgress(progress);
 
             if (progress >= 1) {
@@ -369,13 +372,13 @@ export default function WeddingEnvelopeIntro({
         >
             <div
                 ref={leftPanelRef}
-                className="absolute inset-y-0 left-0 w-[calc(50%+2px)] select-none will-change-transform"
+                className="absolute inset-y-0 left-0 w-[calc(50%+2px)] will-change-transform select-none"
                 style={{ backgroundColor: COLORS.cream }}
                 aria-hidden="true"
             />
             <div
                 ref={rightPanelRef}
-                className="absolute inset-y-0 right-0 w-[calc(50%+2px)] select-none will-change-transform"
+                className="absolute inset-y-0 right-0 w-[calc(50%+2px)] will-change-transform select-none"
                 style={{ backgroundColor: COLORS.cream }}
                 aria-hidden="true"
             />
@@ -400,7 +403,7 @@ export default function WeddingEnvelopeIntro({
                     aria-hidden="true"
                 />
                 <h1
-                    className="font-invite overflow-visible px-3 py-4 text-[4.25rem] leading-none tracking-wide sm:px-4 sm:py-5 sm:text-8xl"
+                    className="overflow-visible px-3 py-4 font-invite text-[4.25rem] leading-none tracking-wide sm:px-4 sm:py-5 sm:text-8xl"
                     style={{
                         backgroundImage: `linear-gradient(
                             115deg,
@@ -444,13 +447,13 @@ export default function WeddingEnvelopeIntro({
                     onKeyUp={onKeyUp}
                     onBlur={stopHold}
                     className={cn(
-                        'relative h-full w-full touch-none rounded-full outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#53736e]/35',
+                        'relative h-full w-full touch-none appearance-none rounded-full bg-transparent outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#53736e]/35',
                         phase === 'idle' ? 'cursor-pointer' : 'cursor-default',
                     )}
                 >
                     <HoldRing progress={holdProgress} active={holding} />
                     <div
-                        className="absolute inset-[8%] transition-transform duration-300 ease-out"
+                        className="absolute inset-[8%] bg-transparent transition-transform duration-300 ease-out"
                         style={{
                             transform: holding ? 'scale(0.96)' : 'scale(1)',
                         }}
