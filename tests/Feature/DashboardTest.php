@@ -48,8 +48,8 @@ test('dashboard shows rsvp entries and stats', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('dashboard')
-        ->where('stats.total', 2)
-        ->where('stats.attending', 1)
+        ->where('stats.total', 3)
+        ->where('stats.attending', 2)
         ->where('stats.declined', 1)
         ->has('rsvps.data', 2)
         ->where('rsvps.data.0.name', 'Jordan Lee')
@@ -57,6 +57,42 @@ test('dashboard shows rsvp entries and stats', function () {
         ->where('rsvps.per_page', 10)
         ->where('rsvps.current_page', 1)
     );
+});
+
+test('dashboard headcount includes additional guests', function () {
+    $user = User::factory()->create();
+
+    Rsvp::create([
+        'name' => 'Alex Rivera',
+        'email' => 'alex@example.com',
+        'attending' => true,
+        'party' => [
+            'size' => 2,
+            'names' => ['Sam Rivera', 'Jamie Rivera'],
+        ],
+        'message' => 'Bringing two guests',
+    ]);
+
+    Rsvp::create([
+        'name' => 'Jordan Lee',
+        'email' => 'jordan@example.com',
+        'attending' => false,
+        'party' => [
+            'size' => 0,
+            'names' => [],
+        ],
+        'message' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('stats.total', 4)
+            ->where('stats.attending', 3)
+            ->where('stats.declined', 1)
+        );
 });
 
 test('dashboard paginates rsvps ten per page', function () {

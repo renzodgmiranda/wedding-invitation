@@ -27,4 +27,18 @@ class Rsvp extends Model
             'party' => 'array',
         ];
     }
+
+    /**
+     * People represented by this RSVP, including additional guests.
+     */
+    public function headcount(): int
+    {
+        if (! $this->attending) {
+            return 1;
+        }
+
+        $additional = (int) data_get($this->party, 'size', 0);
+
+        return 1 + max(0, $additional);
+    }
 }

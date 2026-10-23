@@ -12,10 +12,20 @@ class DashboardController extends Controller
 
     public function __invoke(): Response
     {
+        $responses = Rsvp::query()->get(['attending', 'party']);
+
+        $attending = (int) $responses
+            ->filter(fn (Rsvp $rsvp): bool => $rsvp->attending)
+            ->sum(fn (Rsvp $rsvp): int => $rsvp->headcount());
+
+        $declined = (int) $responses
+            ->reject(fn (Rsvp $rsvp): bool => $rsvp->attending)
+            ->sum(fn (Rsvp $rsvp): int => $rsvp->headcount());
+
         $stats = [
-            'total' => Rsvp::query()->count(),
-            'attending' => Rsvp::query()->where('attending', true)->count(),
-            'declined' => Rsvp::query()->where('attending', false)->count(),
+            'total' => $attending + $declined,
+            'attending' => $attending,
+            'declined' => $declined,
         ];
 
         $rsvps = Rsvp::query()
